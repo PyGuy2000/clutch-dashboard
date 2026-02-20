@@ -9,7 +9,7 @@ def get_db(db_name):
     path = Config.db_path(db_name)
     if not os.path.exists(path):
         return None
-    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    conn = sqlite3.connect(f"file:{path}?mode=ro&nolock=1&immutable=1", uri=True)
     conn.row_factory = sqlite3.Row
     return conn
 
