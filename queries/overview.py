@@ -10,7 +10,7 @@ def cron_success_rate_24h():
         return {"rate": 0, "total": 0, "failed": 0}
     failed = query_scalar("cron_log", """
         SELECT COUNT(*) FROM cron_runs
-        WHERE started_at >= datetime('now', '-24 hours') AND status = 'failed'
+        WHERE started_at >= datetime('now', '-24 hours') AND status = 'failure'
     """)
     rate = round(((total - failed) / total) * 100, 1)
     return {"rate": rate, "total": total, "failed": failed}
@@ -18,12 +18,12 @@ def cron_success_rate_24h():
 
 def todays_cost():
     cost = query_scalar("usage_tracking", """
-        SELECT COALESCE(SUM(estimated_cost), 0) FROM usage_log
+        SELECT COALESCE(SUM(cost_usd), 0) FROM usage_log
         WHERE date(timestamp) = date('now')
     """, default=0.0)
     alerts = query_db("usage_tracking", """
         SELECT * FROM cost_alerts
-        WHERE resolved = 0
+        WHERE acknowledged = 0
         ORDER BY created_at DESC LIMIT 3
     """)
     return {"cost": round(cost, 4), "active_alerts": len(alerts)}
@@ -41,15 +41,12 @@ def content_pipeline_counts():
 def kb_stats():
     sources = query_scalar("knowledge_base", "SELECT COUNT(*) FROM sources")
     chunks = query_scalar("knowledge_base", "SELECT COUNT(*) FROM chunks")
-    flagged = query_scalar("knowledge_base", """
-        SELECT COUNT(*) FROM sources WHERE flagged = 1
-    """)
-    return {"sources": sources, "chunks": chunks, "flagged": flagged}
+    return {"sources": sources, "chunks": chunks, "flagged": 0}
 
 
 def latest_briefing():
     row = query_db("briefings", """
-        SELECT momentum_score, theme, created_at FROM briefings
+        SELECT momentum_weekly, theme, created_at FROM briefings
         ORDER BY created_at DESC LIMIT 1
     """, one=True)
     return row
@@ -58,7 +55,7 @@ def latest_briefing():
 def high_match_jobs():
     count = query_scalar("job_market", """
         SELECT COUNT(*) FROM job_scores
-        WHERE score >= 80 AND date(discovered_at) >= date('now', '-7 days')
+        WHERE match_score >= 80 AND date(created_at) >= date('now', '-7 days')
     """)
     return count
 
@@ -66,7 +63,7 @@ def high_match_jobs():
 def youtube_trending():
     count = query_scalar("youtube_channels", """
         SELECT COUNT(DISTINCT phrase) FROM phrases
-        WHERE date(detected_at) >= date('now', '-7 days')
+        WHERE date(created_at) >= date('now', '-7 days')
     """)
     return count
 

@@ -52,9 +52,9 @@
         <thead>
             <tr>
                 <th>Type</th>
-                <th>Message</th>
                 <th>Threshold</th>
                 <th>Actual</th>
+                <th>Triggered</th>
                 <th>Created</th>
             </tr>
         </thead>
@@ -62,9 +62,9 @@
             {% for a in alerts %}
             <tr>
                 <td><span class="badge badge-red">{{ a.alert_type }}</span></td>
-                <td>{{ a.message }}</td>
-                <td>{{ a.threshold }}</td>
-                <td>{{ a.actual_value }}</td>
+                <td>${{ "%.4f"|format(a.threshold_usd) }}</td>
+                <td>${{ "%.4f"|format(a.current_value_usd) }}</td>
+                <td>{{ a.triggered_at }}</td>
                 <td>{{ a.created_at }}</td>
             </tr>
             {% endfor %}

@@ -14,9 +14,9 @@ def all_jobs_summary():
              WHERE cr3.job_name = cr.job_name
              ORDER BY started_at DESC LIMIT 1) as last_duration,
             COUNT(*) as runs_7d,
-            SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failures_7d,
+            SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END) as failures_7d,
             ROUND(
-                (COUNT(*) - SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END)) * 100.0 / COUNT(*),
+                (COUNT(*) - SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END)) * 100.0 / COUNT(*),
                 1
             ) as success_rate_7d
         FROM cron_runs cr

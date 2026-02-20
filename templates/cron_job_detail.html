@@ -29,7 +29,7 @@
                 <td>
                     {% if run.status == 'success' %}
                         <span class="badge badge-green">success</span>
-                    {% elif run.status == 'failed' %}
+                    {% elif run.status == 'failure' %}
                         <span class="badge badge-red">failed</span>
                     {% elif run.status == 'running' %}
                         <span class="badge badge-blue">running</span>

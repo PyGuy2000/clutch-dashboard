@@ -58,7 +58,7 @@
     <div class="card">
         <div class="card-title">Latest Briefing</div>
         {% if briefing %}
-            <div class="card-value">{{ briefing.momentum_score|default('—') }}</div>
+            <div class="card-value">{{ briefing.momentum_weekly|default('—') }}</div>
             <div class="card-subtitle">{{ briefing.theme|default('No theme') }}</div>
         {% else %}
             <div class="card-value">—</div>

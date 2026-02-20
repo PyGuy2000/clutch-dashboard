@@ -35,7 +35,7 @@
                 <td>
                     {% if job.last_status == 'success' %}
                         <span class="badge badge-green">success</span>
-                    {% elif job.last_status == 'failed' %}
+                    {% elif job.last_status == 'failure' %}
                         <span class="badge badge-red">failed</span>
                     {% elif job.last_status == 'running' %}
                         <span class="badge badge-blue">running</span>

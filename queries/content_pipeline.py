@@ -4,7 +4,7 @@ from db import query_db, query_scalar
 def ideas_by_status():
     """Content ideas grouped by status."""
     return query_db("content_ideas", """
-        SELECT id, title, status, post_type, platform, created_at, updated_at
+        SELECT id, title, status, post_type, source_type, created_at, updated_at
         FROM content_ideas
         ORDER BY
             CASE status
@@ -43,10 +43,10 @@ def post_type_distribution():
 
 
 def dedup_stats():
-    """Deduplication statistics if available."""
+    """Deduplication statistics."""
     total = query_scalar("content_ideas", "SELECT COUNT(*) FROM content_ideas")
     duplicates = query_scalar("content_ideas", """
-        SELECT COUNT(*) FROM content_ideas WHERE status = 'duplicate'
+        SELECT COUNT(*) FROM content_ideas WHERE duplicate_of IS NOT NULL
     """)
     return {"total": total, "duplicates": duplicates}
 
