@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Content Pipeline{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Content Pipeline</h1>
+    <p>LinkedIn content workflow status</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Pitched</div>
+        <div class="card-value">{{ counts.get('pitched', 0) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Approved</div>
+        <div class="card-value" style="color: var(--purple)">{{ counts.get('approved', 0) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Drafted</div>
+        <div class="card-value" style="color: var(--blue)">{{ counts.get('drafted', 0) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Published</div>
+        <div class="card-value" style="color: var(--green)">{{ counts.get('published', 0) }}</div>
+    </div>
+</div>
+
+<div class="section-grid">
+    <div class="chart-container">
+        <h3>Publishing Pace (weekly)</h3>
+        <canvas id="paceChart" height="120"></canvas>
+    </div>
+    <div>
+        <div class="card" style="margin-bottom: 1rem;">
+            <div class="card-title">Post Type Distribution</div>
+            {% for t in types %}
+            <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.875rem;">
+                <span>{{ t.post_type or 'unset' }}</span>
+                <span style="color: var(--text-muted)">{{ t.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card">
+            <div class="card-title">Dedup Stats</div>
+            <div style="font-size: 0.875rem;">
+                {{ dedup.total }} total ideas, {{ dedup.duplicates }} duplicates removed
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">All Content Ideas</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th>Platform</th>
+                <th>Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for idea in ideas %}
+            <tr>
+                <td>{{ idea.title|truncate(60) }}</td>
+                <td>
+                    {% if idea.status == 'published' %}
+                        <span class="badge badge-green">published</span>
+                    {% elif idea.status == 'drafted' %}
+                        <span class="badge badge-blue">drafted</span>
+                    {% elif idea.status == 'approved' %}
+                        <span class="badge badge-purple">approved</span>
+                    {% elif idea.status == 'pitched' %}
+                        <span class="badge badge-gray">pitched</span>
+                    {% elif idea.status == 'duplicate' %}
+                        <span class="badge badge-orange">duplicate</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ idea.status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ idea.post_type or '—' }}</td>
+                <td>{{ idea.platform or '—' }}</td>
+                <td>{{ idea.updated_at|default(idea.created_at, true) }}</td>
+            </tr>
+            {% endfor %}
+            {% if not ideas %}
+            <tr><td colspan="5" class="empty-state"><p>No content ideas yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">Recent Activity</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>Title</th><th>Status</th><th>Type</th><th>Updated</th></tr>
+        </thead>
+        <tbody>
+            {% for r in recent %}
+            <tr>
+                <td>{{ r.title|truncate(50) }}</td>
+                <td><span class="badge badge-{% if r.status == 'published' %}green{% elif r.status == 'drafted' %}blue{% elif r.status == 'approved' %}purple{% else %}gray{% endif %}">{{ r.status }}</span></td>
+                <td>{{ r.post_type or '—' }}</td>
+                <td>{{ r.updated_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+fetch('/api/content/pace').then(r=>r.json()).then(data => {
+    new Chart(document.getElementById('paceChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [
+                { label: 'Published', data: data.values, backgroundColor: '#4ade80' },
+                { label: 'Target (2-3/wk)', data: data.labels.map(()=>2.5), type: 'line',
+                  borderColor: '#facc15', borderDash: [5,5], pointRadius: 0, fill: false }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e2e8f0' } } },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                y: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#334155' }, beginAtZero: true }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

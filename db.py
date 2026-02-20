@@ -1,0 +1,40 @@
+import os
+import sqlite3
+
+from config import Config
+
+
+def get_db(db_name):
+    """Open a read-only SQLite connection. Returns None if the DB file is missing."""
+    path = Config.db_path(db_name)
+    if not os.path.exists(path):
+        return None
+    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def query_db(db_name, sql, params=(), one=False):
+    """Run a read-only query and return results as dicts. Returns [] on missing DB."""
+    conn = get_db(db_name)
+    if conn is None:
+        return {} if one else []
+    try:
+        cur = conn.execute(sql, params)
+        rows = [dict(r) for r in cur.fetchall()]
+        return rows[0] if one and rows else ({} if one else rows)
+    finally:
+        conn.close()
+
+
+def query_scalar(db_name, sql, params=(), default=0):
+    """Run a query returning a single scalar value."""
+    conn = get_db(db_name)
+    if conn is None:
+        return default
+    try:
+        cur = conn.execute(sql, params)
+        row = cur.fetchone()
+        return row[0] if row and row[0] is not None else default
+    finally:
+        conn.close()

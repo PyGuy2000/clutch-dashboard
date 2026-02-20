@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Projects{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Projects</h1>
+    <p>Portfolio status from ProjectHub</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Active Projects</div>
+        <div class="card-value">{{ stats.active }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Hours This Week</div>
+        <div class="card-value">{{ stats.hours_week }}h</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Overdue Milestones</div>
+        <div class="card-value">
+            {% if stats.overdue > 0 %}
+                <span style="color: var(--red)">{{ stats.overdue }}</span>
+            {% else %}
+                <span style="color: var(--green)">0</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Classification</th>
+                <th>Status</th>
+                <th>Health</th>
+                <th>Progress</th>
+                <th>Tech Stack</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in projects %}
+            <tr>
+                <td><a href="/projects/{{ p.id }}">{{ p.name }}</a></td>
+                <td>{{ p.classification or '—' }}</td>
+                <td>
+                    {% if p.status == 'active' %}
+                        <span class="badge badge-green">active</span>
+                    {% elif p.status == 'on_hold' %}
+                        <span class="badge badge-yellow">on hold</span>
+                    {% elif p.status == 'completed' %}
+                        <span class="badge badge-blue">completed</span>
+                    {% elif p.status == 'not_started' %}
+                        <span class="badge badge-gray">not started</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ p.status }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p.health_score is not none %}
+                        {% if p.health_score >= 80 %}
+                            <span style="color: var(--green)">{{ p.health_score }}</span>
+                        {% elif p.health_score >= 60 %}
+                            <span style="color: var(--yellow)">{{ p.health_score }}</span>
+                        {% else %}
+                            <span style="color: var(--red)">{{ p.health_score }}</span>
+                        {% endif %}
+                    {% else %}—{% endif %}
+                </td>
+                <td>{{ p.progress_pct or 0 }}%</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ p.tech_stack or '—' }}</td>
+                <td>{{ p.last_updated or '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not projects %}
+            <tr><td colspan="7" class="empty-state"><p>No projects found</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Overview{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>System Overview</h1>
+    <p>Real-time health metrics across all Clutch skills</p>
+</div>
+
+<div class="card-grid">
+    <!-- Cron Health -->
+    <div class="card">
+        <div class="card-title">Cron Success Rate (24h)</div>
+        <div class="card-value">
+            {% if cron.rate >= 95 %}
+                <span style="color: var(--green)">{{ cron.rate }}%</span>
+            {% elif cron.rate >= 80 %}
+                <span style="color: var(--yellow)">{{ cron.rate }}%</span>
+            {% else %}
+                <span style="color: var(--red)">{{ cron.rate }}%</span>
+            {% endif %}
+        </div>
+        <div class="card-subtitle">{{ cron.total }} runs, {{ cron.failed }} failed</div>
+    </div>
+
+    <!-- API Cost -->
+    <div class="card">
+        <div class="card-title">Today's API Cost</div>
+        <div class="card-value">${{ "%.4f"|format(cost.cost) }}</div>
+        <div class="card-subtitle">
+            {% if cost.active_alerts > 0 %}
+                <span class="badge badge-red">{{ cost.active_alerts }} alert{{ 's' if cost.active_alerts != 1 }}</span>
+            {% else %}
+                <span class="badge badge-green">No alerts</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Content Pipeline -->
+    <div class="card">
+        <div class="card-title">Content Pipeline</div>
+        <div class="card-value">{{ content.values()|list|sum if content else 0 }}</div>
+        <div class="card-subtitle">
+            {% for status, cnt in content.items() %}
+                <span class="badge badge-{% if status == 'published' %}green{% elif status == 'drafted' %}blue{% elif status == 'approved' %}purple{% else %}gray{% endif %}">{{ status }}: {{ cnt }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Knowledge Base -->
+    <div class="card">
+        <div class="card-title">Knowledge Base</div>
+        <div class="card-value">{{ "{:,}".format(kb.chunks) }}</div>
+        <div class="card-subtitle">{{ kb.sources }} sources{% if kb.flagged %}, <span style="color: var(--yellow)">{{ kb.flagged }} flagged</span>{% endif %}</div>
+    </div>
+
+    <!-- Briefing -->
+    <div class="card">
+        <div class="card-title">Latest Briefing</div>
+        {% if briefing %}
+            <div class="card-value">{{ briefing.momentum_score|default('—') }}</div>
+            <div class="card-subtitle">{{ briefing.theme|default('No theme') }}</div>
+        {% else %}
+            <div class="card-value">—</div>
+            <div class="card-subtitle">No briefings yet</div>
+        {% endif %}
+    </div>
+
+    <!-- Job Matches -->
+    <div class="card">
+        <div class="card-title">High-Match Jobs (7d)</div>
+        <div class="card-value">{{ jobs }}</div>
+        <div class="card-subtitle">Score &ge; 80</div>
+    </div>
+
+    <!-- YouTube Trending -->
+    <div class="card">
+        <div class="card-title">YouTube Trending Phrases (7d)</div>
+        <div class="card-value">{{ youtube }}</div>
+        <div class="card-subtitle">Unique phrases detected</div>
+    </div>
+
+    <!-- Projects -->
+    <div class="card">
+        <div class="card-title">Active Projects</div>
+        <div class="card-value">{{ projects.active }}</div>
+        <div class="card-subtitle">
+            {% if projects.overdue > 0 %}
+                <span class="badge badge-red">{{ projects.overdue }} overdue milestone{{ 's' if projects.overdue != 1 }}</span>
+            {% else %}
+                <span class="badge badge-green">All on track</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

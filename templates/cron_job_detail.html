@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Clutch — {{ job_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ job_name }}</h1>
+    <p><a href="/cron" style="color: var(--accent); text-decoration: none;">&larr; Back to Cron Health</a></p>
+</div>
+
+<div class="chart-container">
+    <h3>Run Duration (last 14 days)</h3>
+    <canvas id="durationChart" height="80"></canvas>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Started At</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for run in runs %}
+            <tr>
+                <td>{{ run.started_at }}</td>
+                <td>
+                    {% if run.status == 'success' %}
+                        <span class="badge badge-green">success</span>
+                    {% elif run.status == 'failed' %}
+                        <span class="badge badge-red">failed</span>
+                    {% elif run.status == 'running' %}
+                        <span class="badge badge-blue">running</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ run.status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ "%.1f"|format(run.duration_seconds) if run.duration_seconds else '—' }}s</td>
+                <td style="color: var(--red); font-size: 0.8rem;">{{ run.error_message or '' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not runs %}
+            <tr><td colspan="4" class="empty-state"><p>No runs found for this job</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+fetch('/api/cron/{{ job_name }}/duration')
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById('durationChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels.map(l => l.substring(5, 16)),
+                datasets: [{
+                    label: 'Duration (seconds)',
+                    data: data.values,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: '#334155' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, beginAtZero: true }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Clutch — {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ project.name }}</h1>
+    <p><a href="/projects" style="color: var(--accent); text-decoration: none;">&larr; Back to Projects</a></p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Status</div>
+        <div class="card-value">
+            {% if project.status == 'active' %}
+                <span class="badge badge-green">active</span>
+            {% elif project.status == 'on_hold' %}
+                <span class="badge badge-yellow">on hold</span>
+            {% elif project.status == 'completed' %}
+                <span class="badge badge-blue">completed</span>
+            {% else %}
+                <span class="badge badge-gray">{{ project.status }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Health Score</div>
+        <div class="card-value">{{ project.health_score|default('—') }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Progress</div>
+        <div class="card-value">{{ project.progress_pct|default(0) }}%</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Classification</div>
+        <div class="card-value" style="font-size: 1.25rem;">{{ project.classification|default('—') }}</div>
+    </div>
+</div>
+
+{% if project.description %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-title">Description</div>
+    <p style="font-size: 0.875rem;">{{ project.description }}</p>
+</div>
+{% endif %}
+
+{% if project.tech_stack %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-title">Tech Stack</div>
+    <p style="font-size: 0.875rem;">{{ project.tech_stack }}</p>
+</div>
+{% endif %}
+
+<h3 style="margin-bottom: 0.75rem;">Milestones</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>Title</th><th>Due Date</th><th>Status</th><th>Completed</th></tr>
+        </thead>
+        <tbody>
+            {% for m in milestones %}
+            <tr>
+                <td>{{ m.title }}</td>
+                <td>{{ m.due_date or '—' }}</td>
+                <td>
+                    {% if m.completed_at %}
+                        <span class="badge badge-green">done</span>
+                    {% elif m.due_date and m.due_date < now_date %}
+                        <span class="badge badge-red">overdue</span>
+                    {% else %}
+                        <span class="badge badge-blue">pending</span>
+                    {% endif %}
+                </td>
+                <td>{{ m.completed_at or '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not milestones %}
+            <tr><td colspan="4" class="empty-state"><p>No milestones</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">Recent Time Entries</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>Description</th><th>Hours</th><th>Logged</th></tr>
+        </thead>
+        <tbody>
+            {% for t in time_entries %}
+            <tr>
+                <td>{{ t.description }}</td>
+                <td>{{ t.hours }}h</td>
+                <td>{{ t.logged_at }}</td>
+            </tr>
+            {% endfor %}
+            {% if not time_entries %}
+            <tr><td colspan="3" class="empty-state"><p>No time entries</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

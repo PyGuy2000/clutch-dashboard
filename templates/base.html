@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Clutch Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">Clutch</a>
+        <ul class="navbar-nav">
+            <li><a href="/" class="{{ 'active' if active_page == 'overview' }}">Overview</a></li>
+            <li><a href="/cron" class="{{ 'active' if active_page == 'cron' }}">Cron Health</a></li>
+            <li><a href="/costs" class="{{ 'active' if active_page == 'costs' }}">Costs</a></li>
+            <li><a href="/content" class="{{ 'active' if active_page == 'content' }}">Content</a></li>
+            <li><a href="/projects" class="{{ 'active' if active_page == 'projects' }}">Projects</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="footer">
+        Clutch Monitoring Dashboard &mdash; OpenClaw / KazzerLabs
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

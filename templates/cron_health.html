@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Cron Health{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Cron Health</h1>
+    <p>{{ total_jobs }} registered jobs — last 7 days</p>
+</div>
+
+{% if stale %}
+<div class="alert alert-warning">
+    &#9888; {{ stale|length }} job{{ 's' if stale|length != 1 }} running longer than 30 minutes:
+    {% for s in stale %}{{ s.job_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Last Run</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>7d Success</th>
+                <th>7d Failures</th>
+                <th>7d Runs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td><a href="/cron/{{ job.job_name }}">{{ job.job_name }}</a></td>
+                <td>{{ job.last_run|default('—') }}</td>
+                <td>
+                    {% if job.last_status == 'success' %}
+                        <span class="badge badge-green">success</span>
+                    {% elif job.last_status == 'failed' %}
+                        <span class="badge badge-red">failed</span>
+                    {% elif job.last_status == 'running' %}
+                        <span class="badge badge-blue">running</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ job.last_status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ "%.1f"|format(job.last_duration) if job.last_duration else '—' }}s</td>
+                <td>
+                    {% if job.success_rate_7d >= 95 %}
+                        <span style="color: var(--green)">{{ job.success_rate_7d }}%</span>
+                    {% elif job.success_rate_7d >= 80 %}
+                        <span style="color: var(--yellow)">{{ job.success_rate_7d }}%</span>
+                    {% else %}
+                        <span style="color: var(--red)">{{ job.success_rate_7d }}%</span>
+                    {% endif %}
+                </td>
+                <td>{% if job.failures_7d > 0 %}<span style="color: var(--red)">{{ job.failures_7d }}</span>{% else %}0{% endif %}</td>
+                <td>{{ job.runs_7d }}</td>
+            </tr>
+            {% endfor %}
+            {% if not jobs %}
+            <tr><td colspan="7" class="empty-state"><p>No cron data available</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

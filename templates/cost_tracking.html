@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Cost Tracking{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Cost Tracking</h1>
+    <p>AI API usage and spend analytics</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Month to Date</div>
+        <div class="card-value">${{ "%.4f"|format(month_total) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Monthly Projection</div>
+        <div class="card-value">${{ "%.2f"|format(projection) }}</div>
+        <div class="card-subtitle">Based on 7-day average</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Active Alerts</div>
+        <div class="card-value">
+            {% if alerts|length > 0 %}
+                <span style="color: var(--red)">{{ alerts|length }}</span>
+            {% else %}
+                <span style="color: var(--green)">0</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="chart-container">
+    <h3>Daily Spend (30 days)</h3>
+    <canvas id="dailySpendChart" height="80"></canvas>
+</div>
+
+<div class="section-grid">
+    <div class="chart-container">
+        <h3>Spend by Model</h3>
+        <canvas id="modelChart" height="120"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>Spend by Skill</h3>
+        <canvas id="skillChart" height="120"></canvas>
+    </div>
+</div>
+
+{% if alerts %}
+<h3 style="margin-bottom: 0.75rem;">Active Alerts</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Message</th>
+                <th>Threshold</th>
+                <th>Actual</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in alerts %}
+            <tr>
+                <td><span class="badge badge-red">{{ a.alert_type }}</span></td>
+                <td>{{ a.message }}</td>
+                <td>{{ a.threshold }}</td>
+                <td>{{ a.actual_value }}</td>
+                <td>{{ a.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const COLORS = ['#38bdf8','#4ade80','#facc15','#f87171','#c084fc','#fb923c','#60a5fa','#e879f9'];
+
+fetch('/api/costs/daily').then(r=>r.json()).then(data => {
+    new Chart(document.getElementById('dailySpendChart'), {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Daily Cost ($)',
+                data: data.values,
+                borderColor: '#38bdf8',
+                backgroundColor: 'rgba(56,189,248,0.1)',
+                fill: true, tension: 0.3, pointRadius: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#94a3b8', maxTicksLimit: 10 }, grid: { color: '#334155' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, beginAtZero: true }
+            }
+        }
+    });
+});
+
+fetch('/api/costs/models').then(r=>r.json()).then(data => {
+    new Chart(document.getElementById('modelChart'), {
+        type: 'doughnut',
+        data: {
+            labels: data.labels,
+            datasets: [{ data: data.values, backgroundColor: COLORS.slice(0, data.labels.length) }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } }
+        }
+    });
+});
+
+fetch('/api/costs/skills').then(r=>r.json()).then(data => {
+    new Chart(document.getElementById('skillChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{ label: 'Cost ($)', data: data.values, backgroundColor: '#38bdf8' }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, beginAtZero: true },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
