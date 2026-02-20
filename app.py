@@ -12,6 +12,10 @@ def create_app():
     from routes.cost_tracking import bp as cost_bp
     from routes.content_pipeline import bp as content_bp
     from routes.projects import bp as projects_bp
+    from routes.youtube import bp as youtube_bp
+    from routes.jobs import bp as jobs_bp
+    from routes.briefings import bp as briefings_bp
+    from routes.knowledge_base import bp as kb_bp
     from routes.api import bp as api_bp
 
     app.register_blueprint(overview_bp)
@@ -19,6 +23,10 @@ def create_app():
     app.register_blueprint(cost_bp)
     app.register_blueprint(content_bp)
     app.register_blueprint(projects_bp)
+    app.register_blueprint(youtube_bp)
+    app.register_blueprint(jobs_bp)
+    app.register_blueprint(briefings_bp)
+    app.register_blueprint(kb_bp)
     app.register_blueprint(api_bp)
 
     @app.route("/health")

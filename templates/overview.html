@@ -8,8 +8,7 @@
 </div>
 
 <div class="card-grid">
-    <!-- Cron Health -->
-    <div class="card">
+    <a href="/cron" class="card card-link">
         <div class="card-title">Cron Success Rate (24h)</div>
         <div class="card-value">
             {% if cron.rate >= 95 %}
@@ -21,10 +20,9 @@
             {% endif %}
         </div>
         <div class="card-subtitle">{{ cron.total }} runs, {{ cron.failed }} failed</div>
-    </div>
+    </a>
 
-    <!-- API Cost -->
-    <div class="card">
+    <a href="/costs" class="card card-link">
         <div class="card-title">Today's API Cost</div>
         <div class="card-value">${{ "%.4f"|format(cost.cost) }}</div>
         <div class="card-subtitle">
@@ -34,10 +32,9 @@
                 <span class="badge badge-green">No alerts</span>
             {% endif %}
         </div>
-    </div>
+    </a>
 
-    <!-- Content Pipeline -->
-    <div class="card">
+    <a href="/content" class="card card-link">
         <div class="card-title">Content Pipeline</div>
         <div class="card-value">{{ content.values()|list|sum if content else 0 }}</div>
         <div class="card-subtitle">
@@ -45,43 +42,38 @@
                 <span class="badge badge-{% if status == 'published' %}green{% elif status == 'drafted' %}blue{% elif status == 'approved' %}purple{% else %}gray{% endif %}">{{ status }}: {{ cnt }}</span>
             {% endfor %}
         </div>
-    </div>
+    </a>
 
-    <!-- Knowledge Base -->
-    <div class="card">
+    <a href="/kb" class="card card-link">
         <div class="card-title">Knowledge Base</div>
         <div class="card-value">{{ "{:,}".format(kb.chunks) }}</div>
-        <div class="card-subtitle">{{ kb.sources }} sources{% if kb.flagged %}, <span style="color: var(--yellow)">{{ kb.flagged }} flagged</span>{% endif %}</div>
-    </div>
+        <div class="card-subtitle">{{ kb.sources }} sources</div>
+    </a>
 
-    <!-- Briefing -->
-    <div class="card">
+    <a href="/briefings" class="card card-link">
         <div class="card-title">Latest Briefing</div>
         {% if briefing %}
             <div class="card-value">{{ briefing.momentum_weekly|default('—') }}</div>
-            <div class="card-subtitle">{{ briefing.theme|default('No theme') }}</div>
+            <div class="card-subtitle">{{ briefing.theme|default('No theme')|truncate(60) }}</div>
         {% else %}
             <div class="card-value">—</div>
             <div class="card-subtitle">No briefings yet</div>
         {% endif %}
-    </div>
+    </a>
 
-    <!-- Job Matches -->
-    <div class="card">
+    <a href="/jobs" class="card card-link">
         <div class="card-title">High-Match Jobs (7d)</div>
         <div class="card-value">{{ jobs }}</div>
         <div class="card-subtitle">Score &ge; 80</div>
-    </div>
+    </a>
 
-    <!-- YouTube Trending -->
-    <div class="card">
+    <a href="/youtube" class="card card-link">
         <div class="card-title">YouTube Trending Phrases (7d)</div>
         <div class="card-value">{{ youtube }}</div>
         <div class="card-subtitle">Unique phrases detected</div>
-    </div>
+    </a>
 
-    <!-- Projects -->
-    <div class="card">
+    <a href="/projects" class="card card-link">
         <div class="card-title">Active Projects</div>
         <div class="card-value">{{ projects.active }}</div>
         <div class="card-subtitle">
@@ -91,6 +83,6 @@
                 <span class="badge badge-green">All on track</span>
             {% endif %}
         </div>
-    </div>
+    </a>
 </div>
 {% endblock %}

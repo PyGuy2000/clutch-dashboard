@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Briefing {{ briefing.date }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Briefing: {{ briefing.date }}</h1>
+    <p><a href="/briefings" style="color: var(--accent); text-decoration: none;">&larr; Back to Briefings</a></p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Weekly Momentum</div>
+        <div class="card-value">{{ briefing.momentum_weekly|default('—') }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Monthly Momentum</div>
+        <div class="card-value">{{ briefing.momentum_monthly|default('—') }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Theme</div>
+        <div class="card-subtitle" style="font-size: 0.95rem; color: var(--text); margin-top: 0.5rem;">{{ briefing.theme|default('—') }}</div>
+    </div>
+</div>
+
+{% if signals %}
+<h3 style="margin-bottom: 0.75rem;">Signals</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Source</th>
+                <th>Signal</th>
+                <th>Value</th>
+                <th>Direction</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in signals %}
+            <tr>
+                <td><span class="badge badge-{% if s.category == 'opportunity' %}green{% elif s.category == 'execution' %}blue{% elif s.category == 'visibility' %}purple{% elif s.category == 'knowledge' %}orange{% else %}gray{% endif %}">{{ s.category }}</span></td>
+                <td>{{ s.source }}</td>
+                <td>{{ s.signal_name }}</td>
+                <td>{{ s.value }}</td>
+                <td>
+                    {% if s.direction == 'up' %}
+                        <span style="color: var(--green);">&#9650; up</span>
+                    {% elif s.direction == 'down' %}
+                        <span style="color: var(--red);">&#9660; down</span>
+                    {% elif s.direction == 'new' %}
+                        <span class="badge badge-blue">new</span>
+                    {% else %}
+                        <span style="color: var(--text-muted);">&#9644; flat</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if briefing.content %}
+<h3 style="margin-bottom: 0.75rem;">Full Briefing</h3>
+<div class="card">
+    <div style="white-space: pre-wrap; font-size: 0.875rem; line-height: 1.7;">{{ briefing.content }}</div>
+</div>
+{% endif %}
+{% endblock %}

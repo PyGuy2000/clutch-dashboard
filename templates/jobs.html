@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Job Market{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Job Market Intelligence</h1>
+    <p>{{ total }} jobs scored from Gmail alerts</p>
+</div>
+
+<div class="card-grid">
+    {% for d in distribution %}
+    <div class="card">
+        <div class="card-title">Score {{ d.bracket }}</div>
+        <div class="card-value">{{ d.count }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if high_matches %}
+<h3 style="margin-bottom: 0.75rem;">High-Match Jobs (70+)</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Company</th>
+                <th>Score</th>
+                <th>Location</th>
+                <th>Type</th>
+                <th>Skills</th>
+                <th>Portfolio</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for j in high_matches %}
+            <tr>
+                <td>{{ j.job_title }}</td>
+                <td>{{ j.company or '—' }}</td>
+                <td>
+                    {% if j.match_score >= 90 %}
+                        <span class="badge badge-green">{{ j.match_score }}</span>
+                    {% elif j.match_score >= 80 %}
+                        <span class="badge badge-blue">{{ j.match_score }}</span>
+                    {% else %}
+                        <span class="badge badge-yellow">{{ j.match_score }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ j.location or '—' }}</td>
+                <td>{{ j.work_type or '—' }}</td>
+                <td>{{ j.skill_match or '—' }}</td>
+                <td>{{ j.portfolio_alignment or '—' }}</td>
+                <td>{{ j.email_date or j.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<h3 style="margin-bottom: 0.75rem;">All Scored Jobs</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Company</th>
+                <th>Score</th>
+                <th>Location</th>
+                <th>Type</th>
+                <th>Level</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for j in all_jobs %}
+            <tr>
+                <td>{{ j.job_title }}</td>
+                <td>{{ j.company or '—' }}</td>
+                <td>
+                    {% if j.match_score >= 90 %}
+                        <span class="badge badge-green">{{ j.match_score }}</span>
+                    {% elif j.match_score >= 80 %}
+                        <span class="badge badge-blue">{{ j.match_score }}</span>
+                    {% elif j.match_score >= 70 %}
+                        <span class="badge badge-yellow">{{ j.match_score }}</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ j.match_score }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ j.location or '—' }}</td>
+                <td>{{ j.work_type or '—' }}</td>
+                <td>{{ j.experience_level or '—' }}</td>
+                <td>{{ j.email_date or j.created_at }}</td>
+            </tr>
+            {% endfor %}
+            {% if not all_jobs %}
+            <tr><td colspan="7" class="empty-state"><p>No jobs scored yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if trends %}
+<h3 style="margin-bottom: 0.75rem;">Market Trends</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Week</th>
+                <th>Scanned</th>
+                <th>New</th>
+                <th>Avg Score</th>
+                <th>High</th>
+                <th>Medium</th>
+                <th>Top Skills</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in trends %}
+            <tr>
+                <td>{{ t.week_start }}</td>
+                <td>{{ t.total_jobs_scanned }}</td>
+                <td>{{ t.new_jobs_this_week }}</td>
+                <td>{{ t.avg_match_score }}</td>
+                <td>{{ t.high_matches }}</td>
+                <td>{{ t.medium_matches }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ t.top_skills|truncate(60) if t.top_skills else '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

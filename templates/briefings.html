@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Briefings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Nightly Briefings</h1>
+    <p>AI council signals, momentum scores, and strategic recommendations</p>
+</div>
+
+{% if signals %}
+<h3 style="margin-bottom: 0.75rem;">Latest Signals</h3>
+<div class="card-grid">
+    {% for category, items in signals.items() %}
+    <div class="card">
+        <div class="card-title">{{ category }}</div>
+        {% for s in items %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; font-size: 0.85rem; border-bottom: 1px solid var(--border);">
+            <span>{{ s.signal_name }}</span>
+            <span style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="font-weight: 600;">{{ s.value|truncate(40) }}</span>
+                {% if s.direction == 'up' %}
+                    <span style="color: var(--green);">&#9650;</span>
+                {% elif s.direction == 'down' %}
+                    <span style="color: var(--red);">&#9660;</span>
+                {% elif s.direction == 'new' %}
+                    <span class="badge badge-blue">new</span>
+                {% else %}
+                    <span style="color: var(--text-muted);">&#9644;</span>
+                {% endif %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h3 style="margin-bottom: 0.75rem;">Briefing History</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Momentum</th>
+                <th>Theme</th>
+                <th>Cost</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in briefings %}
+            <tr>
+                <td>{{ b.date }}</td>
+                <td>
+                    {% if b.momentum_weekly %}
+                        {% if b.momentum_weekly >= 70 %}
+                            <span style="color: var(--green)">{{ b.momentum_weekly }}</span>
+                        {% elif b.momentum_weekly >= 50 %}
+                            <span style="color: var(--yellow)">{{ b.momentum_weekly }}</span>
+                        {% else %}
+                            <span style="color: var(--red)">{{ b.momentum_weekly }}</span>
+                        {% endif %}
+                    {% else %}—{% endif %}
+                </td>
+                <td>{{ b.theme|truncate(80) if b.theme else '—' }}</td>
+                <td>{{ "$%.4f"|format(b.estimated_cost) if b.estimated_cost else '—' }}</td>
+                <td><a href="/briefings/{{ b.id }}">View</a></td>
+            </tr>
+            {% endfor %}
+            {% if not briefings %}
+            <tr><td colspan="5" class="empty-state"><p>No briefings yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

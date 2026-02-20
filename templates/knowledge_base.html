@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Knowledge Base</h1>
+    <p>{{ stats.sources }} sources, {{ "{:,}".format(stats.chunks) }} chunks indexed</p>
+</div>
+
+<div class="card-grid">
+    {% for t in by_type %}
+    <div class="card">
+        <div class="card-title">{{ t.source_type }}</div>
+        <div class="card-value">{{ t.count }}</div>
+        <div class="card-subtitle">sources</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if acquisitions %}
+<h3 style="margin-bottom: 0.75rem;">Recent Acquisitions</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>Type</th>
+                <th>Scan Source</th>
+                <th>Discovered</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in acquisitions %}
+            <tr>
+                <td>{{ a.title|truncate(60) if a.title else '—' }}</td>
+                <td><span class="badge badge-{% if a.source_type == 'pdf' %}red{% elif a.source_type == 'article' %}blue{% elif a.source_type == 'youtube-transcript' %}purple{% else %}gray{% endif %}">{{ a.source_type }}</span></td>
+                <td>{{ a.scan_source or '—' }}</td>
+                <td>{{ a.discovery_date or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<h3 style="margin-bottom: 0.75rem;">All Sources</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Summary</th>
+                <th>Added</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sources %}
+            <tr>
+                <td>{% if s.url %}<a href="{{ s.url }}" target="_blank">{{ s.title|truncate(50) if s.title else '(untitled)' }}</a>{% else %}{{ s.title|truncate(50) if s.title else '(untitled)' }}{% endif %}</td>
+                <td><span class="badge badge-{% if s.source_type == 'pdf' %}red{% elif s.source_type == 'article' %}blue{% elif s.source_type == 'youtube-transcript' %}purple{% elif s.source_type == 'text' %}green{% else %}gray{% endif %}">{{ s.source_type }}</span></td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ s.summary_short or '—' }}</td>
+                <td>{{ s.created_at[:10] if s.created_at else '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not sources %}
+            <tr><td colspan="4" class="empty-state"><p>No sources in knowledge base</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
