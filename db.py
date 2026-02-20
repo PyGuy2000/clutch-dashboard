@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import time
 
 from config import Config
 
@@ -38,3 +39,20 @@ def query_scalar(db_name, sql, params=(), default=0):
         return row[0] if row and row[0] is not None else default
     finally:
         conn.close()
+
+
+def get_data_freshness():
+    """Return minutes since newest DB file in data dir was modified."""
+    data_dir = Config.DB_BASE_PATH
+    if not os.path.exists(data_dir):
+        return None
+    mtimes = []
+    for f in os.listdir(data_dir):
+        if f.endswith(".db"):
+            try:
+                mtimes.append(os.path.getmtime(os.path.join(data_dir, f)))
+            except OSError:
+                pass
+    if not mtimes:
+        return None
+    return int((time.time() - max(mtimes)) / 60)

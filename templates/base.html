@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="300">
     <title>{% block title %}Clutch Dashboard{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -21,6 +22,15 @@
             <li><a href="/kb" class="{{ 'active' if active_page == 'kb' }}">KB</a></li>
             <li><a href="/projects" class="{{ 'active' if active_page == 'projects' }}">Projects</a></li>
         </ul>
+        {% if sync_age is not none %}
+        <span class="sync-indicator {% if sync_age > 30 %}sync-stale{% endif %}">
+            {% if sync_age > 30 %}
+                &#9888; {{ sync_age }}m ago
+            {% else %}
+                &#10003; {{ sync_age }}m ago
+            {% endif %}
+        </span>
+        {% endif %}
     </nav>
 
     <div class="container">

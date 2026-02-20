@@ -63,6 +63,21 @@ body {
 .navbar-nav a:hover { background: var(--surface-hover); color: var(--text); }
 .navbar-nav a.active { background: var(--surface-hover); color: var(--accent); }
 
+.sync-indicator {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--green);
+    white-space: nowrap;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(74, 222, 128, 0.1);
+}
+
+.sync-stale {
+    color: var(--yellow);
+    background: rgba(250, 204, 21, 0.1);
+}
+
 /* Layout */
 .container {
     max-width: 1280px;
@@ -267,14 +282,25 @@ a.card-link:hover {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .navbar { padding: 0 1rem; }
+    .navbar { padding: 0 1rem; flex-wrap: wrap; height: auto; min-height: 56px; }
+    .navbar-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+    .navbar-nav::-webkit-scrollbar { display: none; }
     .container { padding: 1rem; }
     .section-grid { grid-template-columns: 1fr; }
     .card-grid { grid-template-columns: 1fr 1fr; }
+    .sync-indicator { margin-left: 0; order: -1; width: 100%; text-align: right; padding: 0.25rem 0; }
+    .table-wrap { overflow-x: auto; }
+    .table-wrap table { min-width: 600px; }
 }
 
 @media (max-width: 480px) {
     .card-grid { grid-template-columns: 1fr; }
     .navbar-nav { gap: 0; }
-    .navbar-nav a { padding: 0.5rem 0.5rem; font-size: 0.8rem; }
+    .navbar-nav a { padding: 0.5rem 0.5rem; font-size: 0.75rem; }
 }

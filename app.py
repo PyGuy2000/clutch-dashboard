@@ -29,6 +29,11 @@ def create_app():
     app.register_blueprint(kb_bp)
     app.register_blueprint(api_bp)
 
+    @app.context_processor
+    def inject_sync_age():
+        from db import get_data_freshness
+        return {"sync_age": get_data_freshness()}
+
     @app.route("/health")
     def health():
         return {"status": "ok"}
