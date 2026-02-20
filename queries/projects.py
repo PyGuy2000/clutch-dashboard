@@ -6,8 +6,9 @@ def all_projects():
     return query_db("projecthub", """
         SELECT
             id, name, classification, status, health_score,
-            progress_pct, tech_stack, last_updated, description
+            progress_percentage, tech_stack, updated_at, description
         FROM projects
+        WHERE archived_at IS NULL
         ORDER BY
             CASE status
                 WHEN 'active' THEN 1
@@ -16,7 +17,7 @@ def all_projects():
                 WHEN 'completed' THEN 4
                 ELSE 5
             END,
-            last_updated DESC
+            updated_at DESC
     """)
 
 
@@ -30,20 +31,20 @@ def project_detail(project_id):
 def project_milestones(project_id):
     """Milestones for a project."""
     return query_db("projecthub", """
-        SELECT title, due_date, completed_at, status
+        SELECT title, target_date, completed_date, status
         FROM milestones
         WHERE project_id = ?
-        ORDER BY due_date
+        ORDER BY target_date
     """, (project_id,))
 
 
 def project_time_entries(project_id, limit=20):
     """Recent time entries for a project."""
     return query_db("projecthub", """
-        SELECT description, hours, logged_at
+        SELECT description, hours, date as logged_at
         FROM time_entries
         WHERE project_id = ?
-        ORDER BY logged_at DESC
+        ORDER BY date DESC
         LIMIT ?
     """, (project_id, limit))
 
@@ -51,14 +52,15 @@ def project_time_entries(project_id, limit=20):
 def summary_stats():
     """Active count, total hours this week, overdue milestones."""
     active = query_scalar("projecthub", """
-        SELECT COUNT(*) FROM projects WHERE status = 'active'
+        SELECT COUNT(*) FROM projects
+        WHERE status = 'active' AND archived_at IS NULL
     """)
     hours_week = query_scalar("projecthub", """
         SELECT COALESCE(SUM(hours), 0) FROM time_entries
-        WHERE date(logged_at) >= date('now', '-7 days')
+        WHERE date(date) >= date('now', '-7 days')
     """, default=0.0)
     overdue = query_scalar("projecthub", """
         SELECT COUNT(*) FROM milestones
-        WHERE due_date < date('now') AND completed_at IS NULL
+        WHERE target_date < date('now') AND completed_date IS NULL
     """)
     return {"active": active, "hours_week": round(hours_week, 1), "overdue": overdue}

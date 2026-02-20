@@ -47,6 +47,7 @@ def kb_stats():
 def latest_briefing():
     row = query_db("briefings", """
         SELECT momentum_weekly, theme, created_at FROM briefings
+        WHERE theme IS NOT NULL
         ORDER BY created_at DESC LIMIT 1
     """, one=True)
     return row

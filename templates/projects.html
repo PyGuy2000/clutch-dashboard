@@ -70,9 +70,9 @@
                         {% endif %}
                     {% else %}—{% endif %}
                 </td>
-                <td>{{ p.progress_pct or 0 }}%</td>
+                <td>{{ p.progress_percentage or 0 }}%</td>
                 <td style="font-size: 0.8rem; color: var(--text-muted)">{{ p.tech_stack or '—' }}</td>
-                <td>{{ p.last_updated or '—' }}</td>
+                <td>{{ p.updated_at or '—' }}</td>
             </tr>
             {% endfor %}
             {% if not projects %}
