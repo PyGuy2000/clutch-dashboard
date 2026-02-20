@@ -75,6 +75,6 @@ def active_projects():
     """)
     overdue = query_scalar("projecthub", """
         SELECT COUNT(*) FROM milestones
-        WHERE due_date < date('now') AND completed_at IS NULL
+        WHERE target_date < date('now') AND completed_date IS NULL
     """)
     return {"active": count, "overdue": overdue}
