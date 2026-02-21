@@ -57,7 +57,7 @@
         <tbody>
             {% for s in sources %}
             <tr>
-                <td>{% if s.url %}<a href="{{ s.url }}" target="_blank">{{ s.title|truncate(50) if s.title else '(untitled)' }}</a>{% else %}{{ s.title|truncate(50) if s.title else '(untitled)' }}{% endif %}</td>
+                <td>{% if s.url and s.url.startswith('http') %}<a href="{{ s.url }}" target="_blank">{{ s.title|truncate(50) if s.title else '(untitled)' }}</a>{% else %}{{ s.title|truncate(50) if s.title else '(untitled)' }}{% endif %}</td>
                 <td><span class="badge badge-{% if s.source_type == 'pdf' %}red{% elif s.source_type == 'article' %}blue{% elif s.source_type == 'youtube-transcript' %}purple{% elif s.source_type == 'text' %}green{% else %}gray{% endif %}">{{ s.source_type }}</span></td>
                 <td style="font-size: 0.8rem; color: var(--text-muted)">{{ s.summary_short or '—' }}</td>
                 <td>{{ s.created_at[:10] if s.created_at else '—' }}</td>
