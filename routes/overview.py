@@ -8,6 +8,7 @@ from queries.overview import (
     latest_briefing,
     high_match_jobs,
     youtube_trending,
+    twitter_trending,
     active_projects,
 )
 
@@ -26,5 +27,6 @@ def index():
         briefing=latest_briefing(),
         jobs=high_match_jobs(),
         youtube=youtube_trending(),
+        twitter=twitter_trending(),
         projects=active_projects(),
     )

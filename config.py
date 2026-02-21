@@ -14,6 +14,7 @@ class Config:
         "youtube_channels": "youtube_channels.db",
         "briefings": "briefings.db",
         "projecthub": "projecthub.db",
+        "twitter_trends": "twitter_trends.db",
     }
 
     @classmethod

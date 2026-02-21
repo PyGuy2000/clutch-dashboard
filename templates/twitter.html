@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Twitter{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Twitter Trend Intelligence</h1>
+    <p>{{ account_total }} accounts tracked, {{ tweet_total }} tweets indexed, {{ tweets_today_count }} today</p>
+</div>
+
+<div class="card-grid">
+    {% for s in status_counts %}
+    <div class="card">
+        <div class="card-title">{{ s.status|capitalize }}</div>
+        <div class="card-value">{{ s.count }}</div>
+        <div class="card-subtitle">themes</div>
+    </div>
+    {% endfor %}
+    <div class="card">
+        <div class="card-title">Cross-Source</div>
+        <div class="card-value">{{ cross_source_total }}</div>
+        <div class="card-subtitle">convergences</div>
+    </div>
+</div>
+
+{% if convergences %}
+<h3 style="margin-bottom: 0.75rem;">Cross-Source Convergences</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Theme</th>
+                <th>Twitter</th>
+                <th>YouTube</th>
+                <th>KB</th>
+                <th>Score</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in convergences %}
+            <tr>
+                <td><strong>{{ c.theme_name }}</strong></td>
+                <td>{{ c.twitter_count }}</td>
+                <td>{{ c.youtube_count }}</td>
+                <td>{{ c.kb_count }}</td>
+                <td>
+                    {% if c.correlation_score >= 0.5 %}
+                        <span class="badge badge-green">{{ "%.2f"|format(c.correlation_score) }}</span>
+                    {% elif c.correlation_score >= 0.3 %}
+                        <span class="badge badge-blue">{{ "%.2f"|format(c.correlation_score) }}</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ "%.2f"|format(c.correlation_score) }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ c.last_updated or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<h3 style="margin-bottom: 0.75rem;">Themes</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Theme</th>
+                <th>Status</th>
+                <th>Mentions</th>
+                <th>Accounts</th>
+                <th>Velocity</th>
+                <th>Acceleration</th>
+                <th>First Seen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in themes %}
+            <tr>
+                <td><strong>{{ t.name }}</strong>{% if t.description %}<br><span style="font-size: 0.8rem; color: var(--text-muted)">{{ t.description|truncate(80) }}</span>{% endif %}</td>
+                <td><span class="badge badge-{% if t.status == 'trending' %}green{% elif t.status == 'active' %}blue{% elif t.status == 'emerging' %}purple{% elif t.status == 'declining' %}red{% else %}gray{% endif %}">{{ t.status }}</span></td>
+                <td>{{ t.mention_count }}</td>
+                <td>{{ t.unique_accounts }}</td>
+                <td>{{ "%.1f"|format(t.velocity) }}/day</td>
+                <td>
+                    {% if t.acceleration > 0 %}
+                        <span style="color: var(--green)">+{{ "%.1f"|format(t.acceleration) }}</span>
+                    {% elif t.acceleration < 0 %}
+                        <span style="color: var(--red)">{{ "%.1f"|format(t.acceleration) }}</span>
+                    {% else %}
+                        <span style="color: var(--text-muted)">0.0</span>
+                    {% endif %}
+                </td>
+                <td>{{ t.first_seen_date or '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not themes %}
+            <tr><td colspan="7" class="empty-state"><p>No themes extracted yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if flagged %}
+<h3 style="margin-bottom: 0.75rem;">Flagged Tweets</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Account</th>
+                <th>Tweet</th>
+                <th>Content Angle</th>
+                <th>Engagement</th>
+                <th>Tags</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in flagged %}
+            <tr>
+                <td>{% if f.tweet_url %}<a href="{{ f.tweet_url }}" target="_blank">@{{ f.handle }}</a>{% else %}@{{ f.handle }}{% endif %}<br><span class="badge badge-{% if f.category == 'ai-leaders' %}purple{% elif f.category == 'energy-utility' %}green{% elif f.category == 'data-mlops' %}blue{% else %}gray{% endif %}">{{ f.category }}</span></td>
+                <td style="max-width: 300px">{{ f.text|truncate(120) }}</td>
+                <td style="font-size: 0.85rem">{{ f.content_angle or '—' }}</td>
+                <td>{{ "{:,}".format((f.likes or 0) + (f.retweets or 0)) }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ f.domain_tags or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<h3 style="margin-bottom: 0.75rem;">Accounts by Category</h3>
+<div class="card-grid">
+    {% for cat in categories %}
+    <div class="card">
+        <div class="card-title">{{ cat.category }}</div>
+        <div class="card-value">{{ cat.count }}</div>
+        <div class="card-subtitle">{{ cat.total_tweets or 0 }} tweets</div>
+    </div>
+    {% endfor %}
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">Tracked Accounts</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Handle</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Tweets</th>
+                <th>Last Scan</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in accts %}
+            <tr>
+                <td><a href="https://x.com/{{ a.handle }}" target="_blank">@{{ a.handle }}</a></td>
+                <td>{{ a.display_name or '—' }}</td>
+                <td><span class="badge badge-{% if a.category == 'ai-leaders' %}purple{% elif a.category == 'energy-utility' %}green{% elif a.category == 'data-mlops' %}blue{% elif a.category == 'tech-ceos' %}red{% else %}gray{% endif %}">{{ a.category }}</span></td>
+                <td>{{ a.total_tweets_tracked }}</td>
+                <td>{{ a.last_scan_date or '—' }}</td>
+                <td>{% if a.active %}<span class="badge badge-green">active</span>{% else %}<span class="badge badge-gray">inactive</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if velocity_history %}
+<h3 style="margin-bottom: 0.75rem;">Theme Velocity (14d)</h3>
+<div class="chart-container" style="max-height: 300px;">
+    <canvas id="velocityChart"></canvas>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if velocity_history %}
+<script>
+(function() {
+    const raw = {{ velocity_history|tojson }};
+    const dates = [...new Set(raw.map(r => r.date))].sort();
+    const themes = [...new Set(raw.map(r => r.name))];
+    const colors = ['#22d3ee', '#a78bfa', '#34d399', '#fb923c', '#f87171', '#facc15'];
+    const datasets = themes.map((name, i) => ({
+        label: name,
+        data: dates.map(d => {
+            const row = raw.find(r => r.date === d && r.name === name);
+            return row ? row.velocity : 0;
+        }),
+        borderColor: colors[i % colors.length],
+        tension: 0.3,
+        fill: false,
+    }));
+    new Chart(document.getElementById('velocityChart'), {
+        type: 'line',
+        data: { labels: dates, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, title: { display: true, text: 'mentions/day' } } },
+            plugins: { legend: { labels: { color: '#94a3b8' } } },
+        }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

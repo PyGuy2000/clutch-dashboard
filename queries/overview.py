@@ -69,6 +69,16 @@ def youtube_trending():
     return count
 
 
+def twitter_trending():
+    count = query_scalar("twitter_trends", """
+        SELECT COUNT(*) FROM themes WHERE status = 'trending'
+    """)
+    cross = query_scalar("twitter_trends", """
+        SELECT COUNT(*) FROM cross_source_themes WHERE correlation_score >= 0.3
+    """)
+    return {"trending": count, "cross_source": cross}
+
+
 def active_projects():
     count = query_scalar("projecthub", """
         SELECT COUNT(*) FROM projects WHERE status = 'active'

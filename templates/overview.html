@@ -73,6 +73,18 @@
         <div class="card-subtitle">Unique phrases detected</div>
     </a>
 
+    <a href="/twitter" class="card card-link">
+        <div class="card-title">Twitter Trends</div>
+        <div class="card-value">{{ twitter.trending }}</div>
+        <div class="card-subtitle">
+            {% if twitter.cross_source > 0 %}
+                <span class="badge badge-blue">{{ twitter.cross_source }} cross-source</span>
+            {% else %}
+                trending themes
+            {% endif %}
+        </div>
+    </a>
+
     <a href="/projects" class="card card-link">
         <div class="card-title">Active Projects</div>
         <div class="card-value">{{ projects.active }}</div>
