@@ -79,6 +79,42 @@ def twitter_trending():
     return {"trending": count, "cross_source": cross}
 
 
+def chores_today():
+    pending = query_scalar("chore_schedule", """
+        SELECT COUNT(*) FROM assignments
+        WHERE assigned_date = date('now') AND status = 'pending'
+    """)
+    done = query_scalar("chore_schedule", """
+        SELECT COUNT(*) FROM assignments
+        WHERE assigned_date = date('now') AND status = 'done'
+    """)
+    return {"pending": pending, "done": done, "total": pending + done}
+
+
+def meal_plan_status():
+    row = query_db("meal_planning", """
+        SELECT status, id FROM meal_plans
+        WHERE status IN ('active', 'draft')
+        ORDER BY CASE status WHEN 'active' THEN 1 WHEN 'draft' THEN 2 END
+        LIMIT 1
+    """, one=True)
+    dinner = None
+    if row and row.get("id"):
+        dinner_row = query_db("meal_planning", """
+            SELECT COALESCE(r.name, pm.freetext_meal) AS meal_name
+            FROM planned_meals pm
+            LEFT JOIN recipes r ON pm.recipe_id = r.id
+            WHERE pm.plan_id = ?
+              AND pm.meal_type = 'dinner'
+              AND pm.day_of_week = CASE CAST(strftime('%w', 'now') AS INTEGER)
+                  WHEN 0 THEN 7 ELSE CAST(strftime('%w', 'now') AS INTEGER) END
+            LIMIT 1
+        """, (row["id"],), one=True)
+        if dinner_row:
+            dinner = dinner_row.get("meal_name")
+    return {"status": row.get("status") if row else None, "dinner": dinner}
+
+
 def active_projects():
     count = query_scalar("projecthub", """
         SELECT COUNT(*) FROM projects WHERE status = 'active'

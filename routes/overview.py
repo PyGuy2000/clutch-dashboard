@@ -9,6 +9,8 @@ from queries.overview import (
     high_match_jobs,
     youtube_trending,
     twitter_trending,
+    chores_today,
+    meal_plan_status,
     active_projects,
 )
 
@@ -28,5 +30,7 @@ def index():
         jobs=high_match_jobs(),
         youtube=youtube_trending(),
         twitter=twitter_trending(),
+        chores=chores_today(),
+        meal=meal_plan_status(),
         projects=active_projects(),
     )

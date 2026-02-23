@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Chores{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Chore Schedule</h1>
+    <p>{{ kids }} active kids, {{ chores }} active chores</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Kids</div>
+        <div class="card-value">{{ kids }}</div>
+        <div class="card-subtitle">active</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Active Chores</div>
+        <div class="card-value">{{ chores }}</div>
+        <div class="card-subtitle">in rotation</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Today Pending</div>
+        <div class="card-value">
+            {% if pending == 0 %}
+                <span style="color: var(--green)">{{ pending }}</span>
+            {% elif pending <= 5 %}
+                <span style="color: var(--yellow)">{{ pending }}</span>
+            {% else %}
+                <span style="color: var(--red)">{{ pending }}</span>
+            {% endif %}
+        </div>
+        <div class="card-subtitle">assignments</div>
+    </div>
+    <div class="card">
+        <div class="card-title">This Week</div>
+        <div class="card-value">
+            {% if weekly %}
+                {% set total_done = weekly|sum(attribute='done') %}
+                {% set total_all = weekly|sum(attribute='total') %}
+                {% if total_all > 0 %}
+                    {{ (total_done / total_all * 100)|round(1) }}%
+                {% else %}
+                    —
+                {% endif %}
+            {% else %}
+                —
+            {% endif %}
+        </div>
+        <div class="card-subtitle">completion rate</div>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">Today's Assignments</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Kid</th>
+                <th>Chore</th>
+                <th>Difficulty</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in assignments %}
+            <tr>
+                <td><strong>{{ a.kid_name }}</strong></td>
+                <td>{{ a.chore_name }}</td>
+                <td><span class="badge badge-{% if a.difficulty == 'easy' %}green{% elif a.difficulty == 'medium' %}blue{% else %}purple{% endif %}">{{ a.difficulty }}</span></td>
+                <td><span class="badge badge-{% if a.status == 'done' %}green{% elif a.status == 'pending' %}gray{% else %}red{% endif %}">{{ a.status }}</span></td>
+            </tr>
+            {% endfor %}
+            {% if not assignments %}
+            <tr><td colspan="4" class="empty-state"><p>No assignments for today</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if weekly %}
+<h3 style="margin-bottom: 0.75rem;">Weekly Completion by Kid</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Kid</th>
+                <th>Done</th>
+                <th>Total</th>
+                <th>Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for w in weekly %}
+            <tr>
+                <td><strong>{{ w.name }}</strong></td>
+                <td>{{ w.done }}</td>
+                <td>{{ w.total }}</td>
+                <td>
+                    {% if w.pct >= 80 %}
+                        <span class="badge badge-green">{{ w.pct }}%</span>
+                    {% elif w.pct >= 50 %}
+                        <span class="badge badge-blue">{{ w.pct }}%</span>
+                    {% else %}
+                        <span class="badge badge-red">{{ w.pct }}%</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if completions %}
+<h3 style="margin-bottom: 0.75rem;">Recent Completions</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Chore</th>
+                <th>Kid</th>
+                <th>Completed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in completions %}
+            <tr>
+                <td>{{ c.chore_name }}</td>
+                <td>{{ c.kid_name }}</td>
+                <td>{{ c.completed_at or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

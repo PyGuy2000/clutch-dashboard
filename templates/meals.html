@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Meals{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Meal Planning</h1>
+    <p>{{ recipes }} recipes, {{ preferences }} active preferences</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Recipes</div>
+        <div class="card-value">{{ recipes }}</div>
+        <div class="card-subtitle">in database</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Plan Status</div>
+        <div class="card-value">
+            {% if plan and plan.status %}
+                <span class="badge badge-{% if plan.status == 'active' %}green{% elif plan.status == 'draft' %}blue{% else %}gray{% endif %}">{{ plan.status }}</span>
+            {% else %}
+                <span class="badge badge-gray">none</span>
+            {% endif %}
+        </div>
+        <div class="card-subtitle">
+            {% if plan and plan.week_start %}
+                week of {{ plan.week_start }}
+            {% else %}
+                no active plan
+            {% endif %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Tonight's Dinner</div>
+        <div class="card-value" style="font-size: 1.2rem;">
+            {% if dinner and dinner.meal_name %}
+                {{ dinner.meal_name|truncate(30) }}
+            {% else %}
+                —
+            {% endif %}
+        </div>
+        <div class="card-subtitle">
+            {% if dinner and dinner.prep_time_min %}
+                {{ dinner.prep_time_min }} min prep
+            {% elif not dinner or not dinner.meal_name %}
+                no plan for today
+            {% endif %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Preferences</div>
+        <div class="card-value">{{ preferences }}</div>
+        <div class="card-subtitle">active</div>
+    </div>
+</div>
+
+{% if meals %}
+<h3 style="margin-bottom: 0.75rem;">This Week's Plan</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Meal</th>
+                <th>Dish</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in meals %}
+            <tr>
+                <td><strong>{{ m.day_name }}</strong></td>
+                <td><span class="badge badge-{% if m.meal_type == 'breakfast' %}blue{% elif m.meal_type == 'lunch' %}green{% elif m.meal_type == 'dinner' %}purple{% else %}gray{% endif %}">{{ m.meal_type }}</span></td>
+                <td>{{ m.meal_name or '—' }}</td>
+                <td style="font-size: 0.85rem; color: var(--text-muted)">{{ m.notes or '' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state" style="margin-top: 2rem;">
+    <p>No active meal plan this week</p>
+</div>
+{% endif %}
+
+{% if top %}
+<h3 style="margin-bottom: 0.75rem;">Top Recipes</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Recipe</th>
+                <th>Type</th>
+                <th>Rating</th>
+                <th>Times Made</th>
+                <th>Prep Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in top %}
+            <tr>
+                <td><strong>{{ r.name }}</strong></td>
+                <td><span class="badge badge-{% if r.meal_type == 'breakfast' %}blue{% elif r.meal_type == 'lunch' %}green{% elif r.meal_type == 'dinner' %}purple{% else %}gray{% endif %}">{{ r.meal_type }}</span></td>
+                <td>
+                    {% if r.rating %}
+                        {% for i in range(r.rating) %}&#9733;{% endfor %}{% for i in range(5 - r.rating) %}&#9734;{% endfor %}
+                    {% else %}
+                        <span style="color: var(--text-muted)">unrated</span>
+                    {% endif %}
+                </td>
+                <td>{{ r.times_made }}</td>
+                <td>{% if r.prep_time_min %}{{ r.prep_time_min }} min{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+            {% if not top %}
+            <tr><td colspan="5" class="empty-state"><p>No recipes yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

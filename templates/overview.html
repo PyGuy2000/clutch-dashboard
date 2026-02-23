@@ -85,6 +85,38 @@
         </div>
     </a>
 
+    <a href="/chores" class="card card-link">
+        <div class="card-title">Chores Today</div>
+        <div class="card-value">
+            {% if chores.pending == 0 %}
+                <span style="color: var(--green)">{{ chores.pending }}</span>
+            {% elif chores.pending <= 5 %}
+                <span style="color: var(--yellow)">{{ chores.pending }}</span>
+            {% else %}
+                <span style="color: var(--red)">{{ chores.pending }}</span>
+            {% endif %}
+        </div>
+        <div class="card-subtitle">{{ chores.done }} done today</div>
+    </a>
+
+    <a href="/meals" class="card card-link">
+        <div class="card-title">Meal Plan</div>
+        <div class="card-value" style="font-size: 1.2rem;">
+            {% if meal.dinner %}
+                {{ meal.dinner|truncate(25) }}
+            {% else %}
+                No active plan
+            {% endif %}
+        </div>
+        <div class="card-subtitle">
+            {% if meal.status %}
+                <span class="badge badge-{% if meal.status == 'active' %}green{% elif meal.status == 'draft' %}blue{% else %}gray{% endif %}">{{ meal.status }}</span>
+            {% else %}
+                <span class="badge badge-gray">no plan</span>
+            {% endif %}
+        </div>
+    </a>
+
     <a href="/projects" class="card card-link">
         <div class="card-title">Active Projects</div>
         <div class="card-value">{{ projects.active }}</div>
