@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Infrastructure — Clutch Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Infrastructure</h1>
+    <p>Live homelab topology, K8s cluster, GPU status, and Ollama models</p>
+</div>
+
+<!-- Topology Graph -->
+<div class="chart-container" style="height: 500px; position: relative;">
+    <h3>Network Topology</h3>
+    <div id="cy" style="width: 100%; height: 440px;"></div>
+</div>
+
+<!-- Detail Panel (shown on node click) -->
+<div id="detail-panel" class="card" style="display: none; margin-bottom: 1.5rem;">
+    <div class="card-title" id="detail-title">Select a node</div>
+    <div id="detail-content"></div>
+</div>
+
+<!-- GPU Status -->
+<div class="card-grid">
+    {% if gpu.get("online") %}
+        {% for g in gpu.get("gpus", []) %}
+        <div class="card">
+            <div class="card-title">GPU {{ g.index }} — {{ g.name }}</div>
+            <div class="card-value">{{ g.utilization_pct }}%</div>
+            <div class="card-subtitle">
+                VRAM: {{ g.memory_used_mb }}MB / {{ g.memory_total_mb }}MB ({{ g.memory_pct }}%)
+                &nbsp;|&nbsp; {{ g.temperature_c }}&deg;C &nbsp;|&nbsp; {{ g.power_w }}W
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <div style="background: var(--border); border-radius: 4px; height: 8px; overflow: hidden;">
+                    <div style="background: {% if g.memory_pct > 90 %}var(--red){% elif g.memory_pct > 70 %}var(--yellow){% else %}var(--green){% endif %}; height: 100%; width: {{ g.memory_pct }}%; transition: width 0.3s;"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <div class="card-title">GPU Status</div>
+            <div class="card-value" style="color: var(--red);">Offline</div>
+            <div class="card-subtitle">GPU exporter at 192.168.1.50:9101 is not responding</div>
+        </div>
+    {% endif %}
+
+    <!-- Ollama Status -->
+    <div class="card">
+        <div class="card-title">Ollama</div>
+        {% if ollama.online %}
+            <div class="card-value" style="color: var(--green);">Online</div>
+            <div class="card-subtitle">
+                {{ ollama.running | length }} model{{ 's' if ollama.running | length != 1 }} loaded
+                &nbsp;|&nbsp;
+                {{ ollama.available | length }} available
+            </div>
+        {% else %}
+            <div class="card-value" style="color: var(--red);">Offline</div>
+            <div class="card-subtitle">Ollama at 192.168.1.50:11434 is not responding</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Loaded Ollama Models -->
+{% if ollama.online and ollama.running %}
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Loaded Model</th>
+                <th>VRAM</th>
+                <th>Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in ollama.running %}
+            <tr>
+                <td><span class="badge badge-green">{{ m.name }}</span></td>
+                <td>{{ m.vram_gb }} GB</td>
+                <td>{{ m.size_gb }} GB</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- K3s Node Metrics -->
+<h2 style="margin: 1.5rem 0 1rem; font-size: 1.125rem;">K3s Nodes</h2>
+<div class="card-grid">
+    {% for node in nodes %}
+    <div class="card">
+        <div class="card-title">
+            {{ node.name }}
+            {% if node.ready %}
+                <span class="badge badge-green">Ready</span>
+            {% else %}
+                <span class="badge badge-red">Not Ready</span>
+            {% endif %}
+        </div>
+        <div class="card-subtitle">
+            {{ node.ip }} &nbsp;|&nbsp; {{ node.kubelet_version }}
+            &nbsp;|&nbsp; {{ node.cpu_capacity }} CPU, {{ node.memory_capacity_gb }}GB RAM
+        </div>
+        {% set metrics = node_metrics | selectattr("instance", "search", node.ip) | first %}
+        {% if metrics %}
+        <div style="margin-top: 0.75rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">CPU</div>
+                <div style="font-size: 1.25rem; font-weight: 700;">{{ metrics.cpu_pct }}%</div>
+            </div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Memory</div>
+                <div style="font-size: 1.25rem; font-weight: 700;">{{ metrics.memory_pct }}%</div>
+            </div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Disk</div>
+                <div style="font-size: 1.25rem; font-weight: 700;">{{ metrics.disk_pct }}%</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Services Table -->
+<h2 style="margin: 1.5rem 0 1rem; font-size: 1.125rem;">Kubernetes Services</h2>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Service</th>
+                <th>Namespace</th>
+                <th>Type</th>
+                <th>Cluster IP</th>
+                <th>Ports</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for svc in services %}
+            <tr>
+                <td>{{ svc.name }}</td>
+                <td><span class="badge badge-blue">{{ svc.namespace }}</span></td>
+                <td>{{ svc.type }}</td>
+                <td><code>{{ svc.cluster_ip }}</code></td>
+                <td>
+                    {% for p in svc.ports %}
+                        {{ p.port }}{% if p.target %}:{{ p.target }}{% endif %}{{ ", " if not loop.last }}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pods Table -->
+<h2 style="margin: 1.5rem 0 1rem; font-size: 1.125rem;">Pods ({{ pods | length }})</h2>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Pod</th>
+                <th>Namespace</th>
+                <th>Node</th>
+                <th>Status</th>
+                <th>Restarts</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pod in pods | sort(attribute='namespace') %}
+            <tr>
+                <td>{{ pod.name }}</td>
+                <td><span class="badge badge-blue">{{ pod.namespace }}</span></td>
+                <td>{{ pod.node }}</td>
+                <td>
+                    {% if pod.phase == 'Running' and pod.ready %}
+                        <span class="badge badge-green">Running</span>
+                    {% elif pod.phase == 'Running' %}
+                        <span class="badge badge-yellow">Not Ready</span>
+                    {% elif pod.phase == 'Succeeded' %}
+                        <span class="badge badge-gray">Completed</span>
+                    {% elif pod.phase == 'Pending' %}
+                        <span class="badge badge-yellow">Pending</span>
+                    {% else %}
+                        <span class="badge badge-red">{{ pod.phase }}</span>
+                    {% endif %}
+                </td>
+                <td>{% if pod.restarts > 0 %}<span style="color: var(--yellow);">{{ pod.restarts }}</span>{% else %}0{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Available Ollama Models -->
+{% if ollama.online and ollama.available %}
+<h2 style="margin: 1.5rem 0 1rem; font-size: 1.125rem;">Available Ollama Models</h2>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>Size</th>
+                <th>Family</th>
+                <th>Parameters</th>
+                <th>Quantization</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in ollama.available %}
+            <tr>
+                <td>{{ m.name }}</td>
+                <td>{{ m.size_gb }} GB</td>
+                <td>{{ m.family }}</td>
+                <td>{{ m.parameter_size }}</td>
+                <td>{{ m.quantization }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<!-- Cytoscape.js CDN (dagre must load before cytoscape-dagre) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.4/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+<script src="{{ url_for('static', filename='js/infrastructure.js') }}"></script>
+{% endblock %}

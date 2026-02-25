@@ -20,6 +20,7 @@ def create_app():
     from routes.twitter import bp as twitter_bp
     from routes.chores import bp as chores_bp
     from routes.meals import bp as meals_bp
+    from routes.infrastructure import bp as infra_bp
 
     app.register_blueprint(overview_bp)
     app.register_blueprint(cron_bp)
@@ -34,6 +35,7 @@ def create_app():
     app.register_blueprint(twitter_bp)
     app.register_blueprint(chores_bp)
     app.register_blueprint(meals_bp)
+    app.register_blueprint(infra_bp)
 
     @app.context_processor
     def inject_sync_age():
