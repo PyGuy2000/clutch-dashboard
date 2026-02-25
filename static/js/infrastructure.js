@@ -119,11 +119,18 @@
                 rankDir: 'TB',
                 nodeSep: 180,
                 rankSep: 110,
-                padding: 60,
+                padding: 100,
+                fit: true,
             },
             userZoomingEnabled: true,
             userPanningEnabled: true,
             boxSelectionEnabled: false,
+            textureOnViewport: false,
+        });
+
+        // Re-fit with extra padding after layout to account for label overflow
+        cy.on('layoutstop', function () {
+            cy.fit(cy.elements(), 100);
         });
 
         // Click handler for detail panel
