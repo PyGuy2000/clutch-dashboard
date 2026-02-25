@@ -46,41 +46,20 @@
                     selector: 'node',
                     style: {
                         'label': 'data(label)',
-                        'text-valign': 'bottom',
+                        'text-valign': 'center',
                         'text-halign': 'center',
-                        'font-size': '12px',
-                        'color': COLORS.text,
-                        'text-margin-y': 8,
+                        'font-size': '11px',
+                        'color': '#ffffff',
                         'text-wrap': 'wrap',
-                        'text-max-width': '300px',
+                        'text-max-width': '140px',
                         'min-zoomed-font-size': 0,
                         'background-color': 'data(color)',
-                        'shape': 'data(shape)',
-                        'width': 40,
-                        'height': 40,
+                        'shape': 'round-rectangle',
+                        'width': 'label',
+                        'height': 'label',
+                        'padding': '12px',
                         'border-width': 2,
                         'border-color': COLORS.border,
-                    }
-                },
-                {
-                    selector: 'node[type = "k8s_node"]',
-                    style: {
-                        'width': 50,
-                        'height': 50,
-                    }
-                },
-                {
-                    selector: 'node[type = "gpu"]',
-                    style: {
-                        'width': 55,
-                        'height': 55,
-                    }
-                },
-                {
-                    selector: 'node[type = "gateway"]',
-                    style: {
-                        'width': 50,
-                        'height': 50,
                     }
                 },
                 {
@@ -117,20 +96,14 @@
             layout: {
                 name: 'dagre',
                 rankDir: 'TB',
-                nodeSep: 180,
-                rankSep: 110,
-                padding: 100,
+                nodeSep: 40,
+                rankSep: 60,
+                padding: 30,
                 fit: true,
             },
             userZoomingEnabled: true,
             userPanningEnabled: true,
             boxSelectionEnabled: false,
-            textureOnViewport: false,
-        });
-
-        // Re-fit with extra padding after layout to account for label overflow
-        cy.on('layoutstop', function () {
-            cy.fit(cy.elements(), 100);
         });
 
         // Click handler for detail panel
