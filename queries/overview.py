@@ -124,3 +124,25 @@ def active_projects():
         WHERE target_date < date('now') AND completed_date IS NULL
     """)
     return {"active": count, "overdue": overdue}
+
+
+def crm_summary():
+    contacts = query_scalar("crm", "SELECT COUNT(*) FROM contacts")
+    high_value = query_scalar("crm", """
+        SELECT COUNT(*) FROM relationship_scores WHERE total_score >= 70
+    """)
+    stale = query_scalar("crm", """
+        SELECT COUNT(*) FROM relationship_scores
+        WHERE (total_score >= 70 AND days_since_contact >= 14)
+           OR (total_score >= 50 AND days_since_contact >= 30)
+    """)
+    pipeline_value = query_scalar("crm", """
+        SELECT COALESCE(SUM(amount), 0) FROM deals
+        WHERE deal_stage NOT IN ('closedwon', 'closedlost')
+    """, default=0.0)
+    return {
+        "contacts": contacts,
+        "high_value": high_value,
+        "stale": stale,
+        "pipeline_value": pipeline_value,
+    }

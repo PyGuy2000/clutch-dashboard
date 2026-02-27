@@ -67,6 +67,25 @@
         <div class="card-subtitle">Score &ge; 80</div>
     </a>
 
+    <a href="/crm" class="card card-link">
+        <div class="card-title">CRM Contacts</div>
+        <div class="card-value">{{ crm.contacts }}</div>
+        <div class="card-subtitle">
+            {% if crm.high_value > 0 %}
+                <span class="badge badge-green">{{ crm.high_value }} high-value</span>
+            {% endif %}
+            {% if crm.stale > 0 %}
+                <span class="badge badge-yellow">{{ crm.stale }} stale</span>
+            {% endif %}
+            {% if crm.pipeline_value > 0 %}
+                ${{ "{:,.0f}".format(crm.pipeline_value) }} pipeline
+            {% endif %}
+            {% if crm.high_value == 0 and crm.stale == 0 and crm.pipeline_value == 0 %}
+                No scored contacts yet
+            {% endif %}
+        </div>
+    </a>
+
     <a href="/youtube" class="card card-link">
         <div class="card-title">YouTube Trending Phrases (7d)</div>
         <div class="card-value">{{ youtube }}</div>

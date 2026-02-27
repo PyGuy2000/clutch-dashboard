@@ -17,6 +17,7 @@ class Config:
         "twitter_trends": "twitter_trends.db",
         "chore_schedule": "chore_schedule.db",
         "meal_planning": "meal_planning.db",
+        "crm": "crm.db",
     }
 
     @classmethod

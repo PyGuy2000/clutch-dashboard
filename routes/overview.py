@@ -12,6 +12,7 @@ from queries.overview import (
     chores_today,
     meal_plan_status,
     active_projects,
+    crm_summary,
 )
 
 bp = Blueprint("overview", __name__)
@@ -33,4 +34,5 @@ def index():
         chores=chores_today(),
         meal=meal_plan_status(),
         projects=active_projects(),
+        crm=crm_summary(),
     )

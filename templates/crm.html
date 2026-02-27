@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Clutch — CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>CRM — HubSpot</h1>
+    <p>{{ contacts }} contacts, {{ companies }} companies, {{ deals }} deals</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Contacts</div>
+        <div class="card-value">{{ contacts }}</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Companies</div>
+        <div class="card-value">{{ companies }}</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Deals</div>
+        <div class="card-value">{{ deals }}</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Pipeline Value</div>
+        <div class="card-value">${{ "{:,.0f}".format(pipeline) }}</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">High-Value Contacts</div>
+        <div class="card-value">
+            {% if high_value > 0 %}
+                <span class="badge badge-green">{{ high_value }}</span>
+            {% else %}
+                0
+            {% endif %}
+        </div>
+        <div class="card-subtitle">Score &ge; 70</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Stale Contacts</div>
+        <div class="card-value">
+            {% if stale > 0 %}
+                <span class="badge badge-yellow">{{ stale }}</span>
+            {% else %}
+                <span class="badge badge-green">0</span>
+            {% endif %}
+        </div>
+        <div class="card-subtitle">Need follow-up</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Pending Drafts</div>
+        <div class="card-value">{{ drafts_count }}</div>
+        <div class="card-subtitle">Follow-up emails</div>
+    </div>
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">Contacts by Score</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Title</th>
+                <th>Score</th>
+                <th>Eng</th>
+                <th>Strat</th>
+                <th>Opp</th>
+                <th>Net</th>
+                <th>Days</th>
+                <th>Nudge</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in contacts_table %}
+            <tr>
+                <td>{{ c.firstname or '' }} {{ c.lastname or '' }}</td>
+                <td>{{ c.company_name or '—' }}</td>
+                <td>{{ c.job_title or '—' }}</td>
+                <td>
+                    {% if c.total_score >= 70 %}
+                        <span class="badge badge-green">{{ c.total_score }}</span>
+                    {% elif c.total_score >= 50 %}
+                        <span class="badge badge-blue">{{ c.total_score }}</span>
+                    {% elif c.total_score >= 25 %}
+                        <span class="badge badge-yellow">{{ c.total_score }}</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ c.total_score }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ c.engagement }}</td>
+                <td>{{ c.strategic_fit }}</td>
+                <td>{{ c.opportunity_potential }}</td>
+                <td>{{ c.network_value }}</td>
+                <td>{{ c.days_since_contact if c.days_since_contact is not none else '—' }}</td>
+                <td>
+                    {% if c.nudge_status == 'pending' %}
+                        <span class="badge badge-yellow">pending</span>
+                    {% elif c.nudge_status == 'sent' %}
+                        <span class="badge badge-green">sent</span>
+                    {% elif c.nudge_status == 'snoozed' %}
+                        <span class="badge badge-blue">snoozed</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ c.nudge_status or 'none' }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not contacts_table %}
+            <tr><td colspan="10" class="empty-state"><p>No contacts synced yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">Companies</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Industry</th>
+                <th>Employees</th>
+                <th>Contacts</th>
+                <th>Research</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for co in companies_table %}
+            <tr>
+                <td>{{ co.name }}</td>
+                <td>{{ co.industry or '—' }}</td>
+                <td>{{ co.num_employees or '—' }}</td>
+                <td>{{ co.contact_count }}</td>
+                <td>
+                    {% if co.research_summary %}
+                        <span class="badge badge-green">researched</span>
+                    {% else %}
+                        <span class="badge badge-gray">pending</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not companies_table %}
+            <tr><td colspan="5" class="empty-state"><p>No companies synced yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<h3 style="margin-bottom: 0.75rem;">Deals</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Deal</th>
+                <th>Stage</th>
+                <th>Amount</th>
+                <th>Contact</th>
+                <th>Company</th>
+                <th>Close Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in deals_table %}
+            <tr>
+                <td>{{ d.deal_name }}</td>
+                <td>
+                    {% if d.deal_stage == 'closedwon' %}
+                        <span class="badge badge-green">{{ d.deal_stage }}</span>
+                    {% elif d.deal_stage == 'closedlost' %}
+                        <span class="badge badge-red">{{ d.deal_stage }}</span>
+                    {% elif d.deal_stage in ('contractsent', 'decisionmakerboughtin') %}
+                        <span class="badge badge-blue">{{ d.deal_stage }}</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ d.deal_stage or 'unknown' }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ "${:,.0f}".format(d.amount) if d.amount else '—' }}</td>
+                <td>{{ d.contact_name or '—' }}</td>
+                <td>{{ d.company_name or '—' }}</td>
+                <td>{{ d.close_date or '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not deals_table %}
+            <tr><td colspan="6" class="empty-state"><p>No deals synced yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if drafts_table %}
+<h3 style="margin-bottom: 0.75rem;">Pending Follow-Up Drafts</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Contact</th>
+                <th>Subject</th>
+                <th>Context</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fd in drafts_table %}
+            <tr>
+                <td>{{ fd.contact_name }}</td>
+                <td>{{ fd.draft_subject or '—' }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ fd.context_summary|truncate(80) if fd.context_summary else '—' }}</td>
+                <td>{{ fd.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if sync %}
+<div style="margin-top: 1.5rem; padding: 0.75rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted);">
+    Last sync: {{ sync.sync_type }} — {{ sync.status }}
+    {% if sync.completed_at %}at {{ sync.completed_at }}{% endif %}
+    ({{ sync.records_fetched }} fetched, {{ sync.records_created }} created, {{ sync.records_updated }} updated)
+    {% if sync.error_message %}
+        <span class="badge badge-red">{{ sync.error_message|truncate(60) }}</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
