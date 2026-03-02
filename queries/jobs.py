@@ -1,4 +1,17 @@
+import json
+
 from db import query_db, query_scalar
+
+
+def _format_json_list(raw):
+    """Parse JSON array of [name, count] pairs into 'name (count), ...' string."""
+    if not raw:
+        return None
+    try:
+        items = json.loads(raw)
+        return ", ".join(f"{name} ({count})" for name, count in items)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return raw
 
 
 def high_match_jobs(min_score=70):
@@ -26,8 +39,8 @@ def all_jobs(limit=50):
 
 
 def market_trends():
-    """Weekly market trend summaries."""
-    return query_db("job_market", """
+    """Weekly market trend summaries with formatted JSON fields."""
+    rows = query_db("job_market", """
         SELECT week_start, total_jobs_scanned, new_jobs_this_week,
                avg_match_score, high_matches, medium_matches,
                top_skills, top_companies, top_locations,
@@ -36,6 +49,11 @@ def market_trends():
         ORDER BY week_start DESC
         LIMIT 12
     """)
+    for row in rows:
+        row["top_skills"] = _format_json_list(row.get("top_skills"))
+        row["top_companies"] = _format_json_list(row.get("top_companies"))
+        row["top_locations"] = _format_json_list(row.get("top_locations"))
+    return rows
 
 
 def score_distribution():
