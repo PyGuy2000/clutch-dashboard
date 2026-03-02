@@ -58,7 +58,11 @@ def high_match_jobs():
         SELECT COUNT(*) FROM job_scores
         WHERE match_score >= 80 AND date(created_at) >= date('now', '-7 days')
     """)
-    return count
+    applied = query_scalar("job_market", """
+        SELECT COUNT(*) FROM job_scores
+        WHERE alert_status = 'applied'
+    """)
+    return {"count": count, "applied": applied}
 
 
 def youtube_trending():

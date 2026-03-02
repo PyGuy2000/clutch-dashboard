@@ -63,8 +63,13 @@
 
     <a href="/jobs" class="card card-link">
         <div class="card-title">High-Match Jobs (7d)</div>
-        <div class="card-value">{{ jobs }}</div>
-        <div class="card-subtitle">Score &ge; 80</div>
+        <div class="card-value">{{ jobs.count }}</div>
+        <div class="card-subtitle">
+            Score &ge; 80
+            {% if jobs.applied > 0 %}
+                &middot; <span class="badge badge-green">{{ jobs.applied }} applied</span>
+            {% endif %}
+        </div>
     </a>
 
     <a href="/crm" class="card card-link">

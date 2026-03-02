@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
     <h1>Job Market Intelligence</h1>
-    <p>{{ total }} jobs scored from Gmail alerts</p>
+    <p>{{ total }} jobs scored from Gmail alerts via Resume Builder API</p>
 </div>
 
 <div class="card-grid">
@@ -14,6 +14,16 @@
         <div class="card-value">{{ d.count }}</div>
     </div>
     {% endfor %}
+    {% if status_map %}
+    <div class="card">
+        <div class="card-title">Status Breakdown</div>
+        <div class="card-value" style="font-size: 1rem;">
+            {% for status, count in status_map.items() %}
+            <span class="badge badge-{% if status == 'applied' %}green{% elif status == 'alerted' %}blue{% elif status == 'skipped' %}gray{% else %}purple{% endif %}">{{ status or 'pending' }}: {{ count }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 {% if high_matches %}
@@ -25,6 +35,7 @@
                 <th>Title</th>
                 <th>Company</th>
                 <th>Score</th>
+                <th>Status</th>
                 <th>Location</th>
                 <th>Type</th>
                 <th>Skills</th>
@@ -46,6 +57,10 @@
                         <span class="badge badge-yellow">{{ j.match_score }}</span>
                     {% endif %}
                 </td>
+                <td>
+                    {% set st = j.alert_status or 'pending' %}
+                    <span class="badge badge-{% if st == 'applied' %}green{% elif st == 'alerted' %}blue{% elif st == 'skipped' %}gray{% else %}purple{% endif %}">{{ st }}</span>
+                </td>
                 <td>{{ j.location or '—' }}</td>
                 <td>{{ j.work_type or '—' }}</td>
                 <td>{{ j.skill_match or '—' }}</td>
@@ -66,6 +81,7 @@
                 <th>Title</th>
                 <th>Company</th>
                 <th>Score</th>
+                <th>Status</th>
                 <th>Location</th>
                 <th>Type</th>
                 <th>Level</th>
@@ -88,6 +104,10 @@
                         <span class="badge badge-gray">{{ j.match_score }}</span>
                     {% endif %}
                 </td>
+                <td>
+                    {% set st = j.alert_status or 'pending' %}
+                    <span class="badge badge-{% if st == 'applied' %}green{% elif st == 'alerted' %}blue{% elif st == 'skipped' %}gray{% else %}purple{% endif %}">{{ st }}</span>
+                </td>
                 <td>{{ j.location or '—' }}</td>
                 <td>{{ j.work_type or '—' }}</td>
                 <td>{{ j.experience_level or '—' }}</td>
@@ -95,7 +115,7 @@
             </tr>
             {% endfor %}
             {% if not all_jobs %}
-            <tr><td colspan="7" class="empty-state"><p>No jobs scored yet</p></td></tr>
+            <tr><td colspan="8" class="empty-state"><p>No jobs scored yet</p></td></tr>
             {% endif %}
         </tbody>
     </table>
@@ -113,7 +133,10 @@
                 <th>Avg Score</th>
                 <th>High</th>
                 <th>Medium</th>
+                <th>Comp Range</th>
                 <th>Top Skills</th>
+                <th>Top Companies</th>
+                <th>Top Locations</th>
             </tr>
         </thead>
         <tbody>
@@ -125,7 +148,18 @@
                 <td>{{ t.avg_match_score }}</td>
                 <td>{{ t.high_matches }}</td>
                 <td>{{ t.medium_matches }}</td>
+                <td>
+                    {% if t.avg_compensation_min and t.avg_compensation_max %}
+                        ${{ "{:,.0f}".format(t.avg_compensation_min) }}–${{ "{:,.0f}".format(t.avg_compensation_max) }}
+                    {% elif t.avg_compensation_min %}
+                        ${{ "{:,.0f}".format(t.avg_compensation_min) }}+
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
                 <td style="font-size: 0.8rem; color: var(--text-muted)">{{ t.top_skills|truncate(60) if t.top_skills else '—' }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ t.top_companies|truncate(60) if t.top_companies else '—' }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ t.top_locations|truncate(60) if t.top_locations else '—' }}</td>
             </tr>
             {% endfor %}
         </tbody>

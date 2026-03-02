@@ -6,7 +6,8 @@ def high_match_jobs(min_score=70):
     return query_db("job_market", """
         SELECT job_title, company, location, work_type, experience_level,
                match_score, skill_match, experience_match, opportunity_quality,
-               portfolio_alignment, related_projects, email_date, created_at
+               portfolio_alignment, related_projects, alert_status,
+               email_date, created_at
         FROM job_scores
         WHERE match_score >= ?
         ORDER BY match_score DESC, created_at DESC
@@ -17,7 +18,7 @@ def all_jobs(limit=50):
     """All scored jobs."""
     return query_db("job_market", """
         SELECT job_title, company, location, work_type, experience_level,
-               match_score, email_date, created_at
+               match_score, alert_status, email_date, created_at
         FROM job_scores
         ORDER BY created_at DESC
         LIMIT ?
@@ -29,7 +30,8 @@ def market_trends():
     return query_db("job_market", """
         SELECT week_start, total_jobs_scanned, new_jobs_this_week,
                avg_match_score, high_matches, medium_matches,
-               top_skills, top_companies, top_locations
+               top_skills, top_companies, top_locations,
+               avg_compensation_min, avg_compensation_max
         FROM market_trends
         ORDER BY week_start DESC
         LIMIT 12
@@ -52,6 +54,16 @@ def score_distribution():
         FROM job_scores
         GROUP BY bracket
         ORDER BY bracket DESC
+    """)
+
+
+def alert_status_distribution():
+    """Count of jobs by alert status."""
+    return query_db("job_market", """
+        SELECT alert_status, COUNT(*) as count
+        FROM job_scores
+        GROUP BY alert_status
+        ORDER BY count DESC
     """)
 
 
