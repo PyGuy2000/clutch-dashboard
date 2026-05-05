@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}Clutch — GitHub Activity{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>GitHub Activity</h1>
+    <p>Commit and PR activity across all repos</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-title">Repos Tracked</div>
+        <div class="card-value">{{ stats.total_repos }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Commits This Week</div>
+        <div class="card-value" style="color: var(--green)">{{ stats.commits_week }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Active Repos (7d)</div>
+        <div class="card-value" style="color: var(--accent)">{{ stats.active_repos_week }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Open PRs</div>
+        <div class="card-value">
+            {% if stats.open_prs > 0 %}
+                <span style="color: var(--yellow)">{{ stats.open_prs }}</span>
+            {% else %}
+                <span style="color: var(--green)">0</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── Charts ─────────────────────────────────────────────────────── #}
+<div class="section-grid">
+    <div class="chart-container">
+        <h3>Daily Commits (30 days)</h3>
+        <canvas id="dailyCommitsChart" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>Top Repos This Week</h3>
+        <canvas id="repoCommitsChart" height="200"></canvas>
+    </div>
+</div>
+
+{# ── Open PRs ────────────────────────────────────────────────────── #}
+{% if open_prs %}
+<h3 style="margin-bottom: 0.75rem;">Open Pull Requests</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Repo</th>
+                <th>PR</th>
+                <th>Branch</th>
+                <th>Author</th>
+                <th>Opened</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pr in open_prs %}
+            <tr>
+                <td>
+                    {% if pr.project_id %}
+                        <a href="/projects/{{ pr.project_id }}">{{ pr.project_name }}</a>
+                    {% else %}
+                        {{ pr.github_repo.split('/')[1] }}
+                    {% endif %}
+                </td>
+                <td><a href="{{ pr.url }}" target="_blank">{{ pr.title }}</a></td>
+                <td><span class="badge badge-purple">{{ pr.branch or '—' }}</span></td>
+                <td>{{ pr.author }}</td>
+                <td>{{ pr.event_date[:10] if pr.event_date else '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ── Recent Merged PRs ──────────────────────────────────────────── #}
+{% if merged_prs %}
+<h3 style="margin-bottom: 0.75rem;">Recently Merged PRs</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Repo</th>
+                <th>PR</th>
+                <th>Branch</th>
+                <th>Author</th>
+                <th>Merged</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pr in merged_prs %}
+            <tr>
+                <td>
+                    {% if pr.project_id %}
+                        <a href="/projects/{{ pr.project_id }}">{{ pr.project_name }}</a>
+                    {% else %}
+                        {{ pr.github_repo.split('/')[1] }}
+                    {% endif %}
+                </td>
+                <td><a href="{{ pr.url }}" target="_blank">{{ pr.title }}</a></td>
+                <td><span class="badge badge-blue">{{ pr.branch or '—' }}</span></td>
+                <td>{{ pr.author }}</td>
+                <td>{{ pr.event_date[:10] if pr.event_date else '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ── Repo Summary ────────────────────────────────────────────────── #}
+<h3 style="margin-bottom: 0.75rem;">All Repos</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Repo</th>
+                <th>Project</th>
+                <th>Last Commit</th>
+                <th>Commits (7d)</th>
+                <th>Total Commits</th>
+                <th>Open PRs</th>
+                <th>Merged PRs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in repos %}
+            <tr>
+                <td>{{ r.github_repo.split('/')[1] }}</td>
+                <td>
+                    {% if r.project_id %}
+                        <a href="/projects/{{ r.project_id }}">{{ r.project_name }}</a>
+                    {% else %}
+                        <span style="color: var(--text-muted)">unlinked</span>
+                    {% endif %}
+                </td>
+                <td>{{ r.last_commit[:10] if r.last_commit else '—' }}</td>
+                <td>
+                    {% if r.commits_week > 0 %}
+                        <span style="color: var(--green)">{{ r.commits_week }}</span>
+                    {% else %}
+                        0
+                    {% endif %}
+                </td>
+                <td>{{ r.total_commits }}</td>
+                <td>
+                    {% if r.open_prs > 0 %}
+                        <span style="color: var(--yellow)">{{ r.open_prs }}</span>
+                    {% else %}
+                        0
+                    {% endif %}
+                </td>
+                <td>{{ r.merged_prs }}</td>
+            </tr>
+            {% endfor %}
+            {% if not repos %}
+            <tr><td colspan="7" class="empty-state"><p>No GitHub data synced yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{# ── Recent Commits Feed ─────────────────────────────────────────── #}
+<h3 style="margin-bottom: 0.75rem;">Recent Commits</h3>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Repo</th>
+                <th>Commit</th>
+                <th>Author</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in recent %}
+            <tr>
+                <td>
+                    {% if c.project_id %}
+                        <a href="/projects/{{ c.project_id }}">{{ c.project_name }}</a>
+                    {% else %}
+                        {{ c.github_repo.split('/')[1] }}
+                    {% endif %}
+                </td>
+                <td><a href="{{ c.url }}" target="_blank">{{ c.title[:80] }}{% if c.title|length > 80 %}...{% endif %}</a></td>
+                <td>{{ c.author }}</td>
+                <td>{{ c.event_date[:10] if c.event_date else '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not recent %}
+            <tr><td colspan="4" class="empty-state"><p>No commits synced yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Daily commits chart
+const dailyData = {{ daily_commits | tojson }};
+if (dailyData.length > 0) {
+    new Chart(document.getElementById('dailyCommitsChart'), {
+        type: 'bar',
+        data: {
+            labels: dailyData.map(d => d.day.slice(5)),
+            datasets: [{
+                label: 'Commits',
+                data: dailyData.map(d => d.commit_count),
+                backgroundColor: 'rgba(74, 222, 128, 0.5)',
+                borderColor: 'rgba(74, 222, 128, 1)',
+                borderWidth: 1,
+                borderRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    ticks: { color: '#94a3b8', maxTicksLimit: 15 },
+                    grid: { color: 'rgba(51, 65, 85, 0.5)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#94a3b8', stepSize: 1 },
+                    grid: { color: 'rgba(51, 65, 85, 0.5)' }
+                }
+            }
+        }
+    });
+}
+
+// Top repos chart
+const repoData = {{ commits_by_repo | tojson }};
+if (repoData.length > 0) {
+    new Chart(document.getElementById('repoCommitsChart'), {
+        type: 'bar',
+        data: {
+            labels: repoData.map(d => (d.project_name || d.github_repo.split('/')[1]).slice(0, 20)),
+            datasets: [{
+                label: 'Commits',
+                data: repoData.map(d => d.commit_count),
+                backgroundColor: 'rgba(56, 189, 248, 0.5)',
+                borderColor: 'rgba(56, 189, 248, 1)',
+                borderWidth: 1,
+                borderRadius: 3
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { color: '#94a3b8', stepSize: 1 },
+                    grid: { color: 'rgba(51, 65, 85, 0.5)' }
+                },
+                y: {
+                    ticks: { color: '#94a3b8' },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

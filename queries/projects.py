@@ -2,11 +2,12 @@ from db import query_db, query_scalar
 
 
 def all_projects():
-    """All projects with summary info."""
+    """All projects with summary info including GitHub activity."""
     return query_db("projecthub", """
         SELECT
             id, name, classification, status, health_score,
-            progress_percentage, tech_stack, updated_at, description
+            progress_percentage, tech_stack, updated_at, description,
+            last_commit_date, open_pr_count, commits_this_week
         FROM projects
         WHERE archived_at IS NULL
         ORDER BY
@@ -50,7 +51,7 @@ def project_time_entries(project_id, limit=20):
 
 
 def summary_stats():
-    """Active count, total hours this week, overdue milestones."""
+    """Active count, total hours this week, overdue milestones, commits this week."""
     active = query_scalar("projecthub", """
         SELECT COUNT(*) FROM projects
         WHERE status = 'active' AND archived_at IS NULL
@@ -63,4 +64,13 @@ def summary_stats():
         SELECT COUNT(*) FROM milestones
         WHERE target_date < date('now') AND completed_date IS NULL
     """)
-    return {"active": active, "hours_week": round(hours_week, 1), "overdue": overdue}
+    commits_week = query_scalar("projecthub", """
+        SELECT COALESCE(SUM(commits_this_week), 0) FROM projects
+        WHERE archived_at IS NULL
+    """)
+    return {
+        "active": active,
+        "hours_week": round(hours_week, 1),
+        "overdue": overdue,
+        "commits_week": commits_week,
+    }

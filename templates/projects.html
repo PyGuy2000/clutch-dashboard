@@ -26,6 +26,10 @@
             {% endif %}
         </div>
     </div>
+    <div class="card">
+        <div class="card-title">Commits This Week</div>
+        <div class="card-value" style="color: var(--green)">{{ stats.commits_week }}</div>
+    </div>
 </div>
 
 <div class="table-wrap">
@@ -37,7 +41,9 @@
                 <th>Status</th>
                 <th>Health</th>
                 <th>Progress</th>
-                <th>Tech Stack</th>
+                <th>Commits (7d)</th>
+                <th>Open PRs</th>
+                <th>Last Commit</th>
                 <th>Last Updated</th>
             </tr>
         </thead>
@@ -71,12 +77,26 @@
                     {% else %}—{% endif %}
                 </td>
                 <td>{{ p.progress_percentage or 0 }}%</td>
-                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ p.tech_stack or '—' }}</td>
+                <td>
+                    {% if p.commits_this_week %}
+                        <span style="color: var(--green)">{{ p.commits_this_week }}</span>
+                    {% else %}
+                        <span style="color: var(--text-muted)">0</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p.open_pr_count %}
+                        <span style="color: var(--yellow)">{{ p.open_pr_count }}</span>
+                    {% else %}
+                        <span style="color: var(--text-muted)">0</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.last_commit_date[:10] if p.last_commit_date else '—' }}</td>
                 <td>{{ p.updated_at or '—' }}</td>
             </tr>
             {% endfor %}
             {% if not projects %}
-            <tr><td colspan="7" class="empty-state"><p>No projects found</p></td></tr>
+            <tr><td colspan="9" class="empty-state"><p>No projects found</p></td></tr>
             {% endif %}
         </tbody>
     </table>

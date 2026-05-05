@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Repos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>GitHub Repos</h1>
+    <p>{{ repo_total }} repos tracked, {{ milestone_total }} milestones detected</p>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>GitHub</th>
+                <th>Live URL</th>
+                <th>Stack</th>
+                <th>Domains</th>
+                <th>Milestones</th>
+                <th>Last Commit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in repos %}
+            <tr>
+                <td>{{ r.name }}</td>
+                <td>
+                    {% if r.github_repo %}
+                    <a href="https://github.com/{{ r.github_repo }}" target="_blank">{{ r.github_repo }}</a>
+                    {% else %}&mdash;{% endif %}
+                </td>
+                <td>
+                    {% if r.live_url %}
+                    <a href="{{ r.live_url }}" target="_blank">{{ r.live_url | truncate(40) }}</a>
+                    {% else %}&mdash;{% endif %}
+                </td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ r.stack or '&mdash;' }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted)">{{ r.domains or '&mdash;' }}</td>
+                <td>
+                    {% if r.milestone_count > 0 %}
+                    <span class="badge badge-blue">{{ r.milestone_count }}</span>
+                    {% else %}&mdash;{% endif %}
+                </td>
+                <td>{{ r.last_commit_date or '&mdash;' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not repos %}
+            <tr><td colspan="7" class="empty-state"><p>No repos registered</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
