@@ -8,6 +8,54 @@
     <p>Live homelab topology, K8s cluster, GPU status, and Ollama models</p>
 </div>
 
+<!-- System Health -->
+{% if health.status == 'critical' %}
+<div class="alert alert-danger">
+    <strong>{{ health.alert_count }} issue{{ 's' if health.alert_count != 1 }}</strong> &mdash; System health check found critical problems
+</div>
+{% elif health.status == 'warning' %}
+<div class="alert alert-warning">
+    <strong>{{ health.alert_count }} warning{{ 's' if health.alert_count != 1 }}</strong> &mdash; System health check found issues that need attention
+</div>
+{% else %}
+<div class="alert alert-info">
+    All systems healthy &mdash; no issues detected
+</div>
+{% endif %}
+
+{% if health.alerts %}
+<div class="table-wrap" style="margin-bottom: 1.5rem;">
+    <table>
+        <thead>
+            <tr>
+                <th>Severity</th>
+                <th>Category</th>
+                <th>Issue</th>
+                <th>Detail</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in health.alerts %}
+            <tr>
+                <td>
+                    {% if alert.severity == 'critical' %}
+                        <span class="badge badge-red">CRITICAL</span>
+                    {% elif alert.severity == 'warning' %}
+                        <span class="badge badge-yellow">WARNING</span>
+                    {% else %}
+                        <span class="badge badge-blue">INFO</span>
+                    {% endif %}
+                </td>
+                <td><span class="badge badge-gray">{{ alert.category }}</span></td>
+                <td>{{ alert.title }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-muted);">{{ alert.detail }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 <!-- Topology Graph -->
 <div class="chart-container" style="height: 600px; position: relative;">
     <h3>Network Topology</h3>

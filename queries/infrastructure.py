@@ -55,6 +55,141 @@ def _http_get_json(url, timeout=5):
         return None
 
 
+def get_system_health():
+    """Aggregate system health checks. Returns list of alerts and overall status."""
+    alerts = []
+
+    # 1. Longhorn volume health
+    volumes = _k8s_get("/apis/longhorn.io/v1beta2/volumes")
+    if volumes:
+        for vol in volumes.get("items", []):
+            name = vol["metadata"]["name"]
+            ns = vol["metadata"].get("namespace", "")
+            state = vol.get("status", {}).get("state", "unknown")
+            robustness = vol.get("status", {}).get("robustness", "unknown")
+            if robustness == "faulted":
+                alerts.append({
+                    "severity": "critical",
+                    "category": "storage",
+                    "title": f"Longhorn volume faulted: {name}",
+                    "detail": f"State: {state}, Robustness: {robustness}",
+                })
+            elif robustness == "degraded":
+                alerts.append({
+                    "severity": "warning",
+                    "category": "storage",
+                    "title": f"Longhorn volume degraded: {name}",
+                    "detail": f"State: {state}, Robustness: {robustness}",
+                })
+            elif state == "detached" and robustness != "unknown":
+                alerts.append({
+                    "severity": "info",
+                    "category": "storage",
+                    "title": f"Longhorn volume detached: {name}",
+                    "detail": f"Robustness: {robustness}",
+                })
+
+    # 2. PVC health
+    pvcs = _k8s_get("/api/v1/persistentvolumeclaims")
+    if pvcs:
+        for pvc in pvcs.get("items", []):
+            phase = pvc.get("status", {}).get("phase", "Unknown")
+            name = pvc["metadata"]["name"]
+            ns = pvc["metadata"].get("namespace", "")
+            if phase in ("Pending", "Lost"):
+                alerts.append({
+                    "severity": "critical" if phase == "Lost" else "warning",
+                    "category": "storage",
+                    "title": f"PVC {phase}: {ns}/{name}",
+                    "detail": f"StorageClass: {pvc['spec'].get('storageClassName', 'N/A')}",
+                })
+
+    # 3. Pod health
+    pods = _k8s_get("/api/v1/pods")
+    if pods:
+        for pod in pods.get("items", []):
+            name = pod["metadata"]["name"]
+            ns = pod["metadata"].get("namespace", "")
+            phase = pod.get("status", {}).get("phase", "Unknown")
+
+            # Skip completed jobs
+            if phase == "Succeeded":
+                continue
+
+            for cs in pod.get("status", {}).get("containerStatuses", []):
+                restarts = cs.get("restartCount", 0)
+                waiting = cs.get("state", {}).get("waiting", {})
+                reason = waiting.get("reason", "")
+
+                if reason in ("CrashLoopBackOff", "ImagePullBackOff", "ErrImagePull"):
+                    alerts.append({
+                        "severity": "critical",
+                        "category": "pods",
+                        "title": f"Pod {reason}: {ns}/{name}",
+                        "detail": waiting.get("message", "")[:120],
+                    })
+                elif restarts >= 10:
+                    alerts.append({
+                        "severity": "warning",
+                        "category": "pods",
+                        "title": f"High restart count: {ns}/{name}",
+                        "detail": f"{restarts} restarts on container {cs.get('name', '')}",
+                    })
+
+            if phase == "Pending":
+                # Check if pending for too long (conditions)
+                conditions = pod.get("status", {}).get("conditions", [])
+                unschedulable = any(
+                    c.get("reason") == "Unschedulable" for c in conditions
+                )
+                if unschedulable:
+                    alerts.append({
+                        "severity": "warning",
+                        "category": "pods",
+                        "title": f"Pod unschedulable: {ns}/{name}",
+                        "detail": "No node has sufficient resources",
+                    })
+
+    # 4. Node health
+    nodes = _k8s_get("/api/v1/nodes")
+    if nodes:
+        for node in nodes.get("items", []):
+            name = node["metadata"]["name"]
+            conditions = {
+                c["type"]: c for c in node.get("status", {}).get("conditions", [])
+            }
+            ready = conditions.get("Ready", {})
+            if ready.get("status") != "True":
+                alerts.append({
+                    "severity": "critical",
+                    "category": "nodes",
+                    "title": f"Node not ready: {name}",
+                    "detail": ready.get("message", "")[:120],
+                })
+            for cond_name in ("MemoryPressure", "DiskPressure", "PIDPressure"):
+                cond = conditions.get(cond_name, {})
+                if cond.get("status") == "True":
+                    alerts.append({
+                        "severity": "warning",
+                        "category": "nodes",
+                        "title": f"{cond_name} on {name}",
+                        "detail": cond.get("message", "")[:120],
+                    })
+
+    # Sort: critical first, then warning, then info
+    severity_order = {"critical": 0, "warning": 1, "info": 2}
+    alerts.sort(key=lambda a: severity_order.get(a["severity"], 9))
+
+    if not alerts:
+        status = "healthy"
+    elif any(a["severity"] == "critical" for a in alerts):
+        status = "critical"
+    else:
+        status = "warning"
+
+    return {"status": status, "alerts": alerts, "alert_count": len(alerts)}
+
+
 def get_k8s_nodes():
     """Get K3s node status and resource info."""
     data = _k8s_get("/api/v1/nodes")

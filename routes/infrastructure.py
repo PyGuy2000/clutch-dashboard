@@ -8,6 +8,7 @@ from queries.infrastructure import (
     get_node_metrics,
     get_ollama_status,
     get_infra_topology,
+    get_system_health,
 )
 
 bp = Blueprint("infrastructure", __name__)
@@ -21,6 +22,7 @@ def infra_index():
     gpu = get_gpu_metrics()
     node_metrics = get_node_metrics()
     ollama = get_ollama_status()
+    health = get_system_health()
 
     return render_template(
         "infrastructure.html",
@@ -31,6 +33,7 @@ def infra_index():
         gpu=gpu,
         node_metrics=node_metrics,
         ollama=ollama,
+        health=health,
     )
 
 
@@ -56,3 +59,9 @@ def api_nodes():
 def api_ollama():
     """JSON endpoint for Ollama status refresh."""
     return jsonify(get_ollama_status())
+
+
+@bp.route("/api/infra/health")
+def api_health():
+    """JSON endpoint for system health checks."""
+    return jsonify(get_system_health())

@@ -9,7 +9,7 @@ set -euo pipefail
 NAS_USER="kazfamily"
 NAS_HOST="192.168.1.126"
 NAS_PATH="/volume1/data/shared/openclaw-databases"
-DB_SRC="/home/robkacz/projects/autoforge_test_app/data/projecthub.db"
+DB_SRC="/home/robkacz/python/projects/python_project_tracker/data/projecthub.db"
 BACKUP_DIR="/tmp/projecthub_snapshot"
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') — Starting ProjectHub DB sync to NAS"
