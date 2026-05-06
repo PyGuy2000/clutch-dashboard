@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Pediatrica Health{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Pediatrica Dashboard Health</h1>
+    <p>Client-facing application pipeline monitoring</p>
+</div>
+
+{# Traffic light banner #}
+{% if health.status == 'healthy' %}
+<div class="alert alert-success">
+    &#10003; All systems healthy — data is fresh, pods are running
+</div>
+{% elif health.status == 'warning' %}
+<div class="alert alert-warning">
+    &#9888; Warning — {{ health.issues|length }} issue{{ 's' if health.issues|length != 1 }}
+</div>
+{% else %}
+<div class="alert alert-danger">
+    &#10007; Critical — {{ health.issues|length }} issue{{ 's' if health.issues|length != 1 }} detected
+</div>
+{% endif %}
+
+{# Issues list #}
+{% if health.issues %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <h3>Issues</h3>
+    <ul style="margin: 0; padding-left: 1.5rem;">
+        {% for issue in health.issues %}
+        <li>
+            {% if issue.severity == 'critical' %}
+                <span class="badge badge-red">critical</span>
+            {% else %}
+                <span class="badge badge-yellow">warning</span>
+            {% endif %}
+            {{ issue.message }}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{# Pipeline Status Card #}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <h3>Pipeline Status</h3>
+    {% if health.metrics.pipeline %}
+    {% set p = health.metrics.pipeline %}
+    <div class="table-wrap">
+        <table>
+            <tbody>
+                <tr>
+                    <th>Last Google Review Scrape</th>
+                    <td>{{ p.last_scrape|default('Unknown') }}</td>
+                </tr>
+                <tr>
+                    <th>Last Sentiment Analysis</th>
+                    <td>{{ p.last_sentiment|default('Unknown') }}</td>
+                </tr>
+                <tr>
+                    <th>Data Age</th>
+                    <td>
+                        {% if health.metrics.data_age_hours is not none %}
+                            {% if health.metrics.data_age_hours <= 26 %}
+                                <span style="color: var(--green)">{{ health.metrics.data_age_hours }}h ago</span>
+                            {% elif health.metrics.data_age_hours <= 48 %}
+                                <span style="color: var(--yellow)">{{ health.metrics.data_age_hours }}h ago</span>
+                            {% else %}
+                                <span style="color: var(--red)">{{ health.metrics.data_age_hours }}h ago</span>
+                            {% endif %}
+                        {% else %}
+                            Unknown
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Commit SHA</th>
+                    <td><code>{{ p.commit_sha|default('—') }}</code></td>
+                </tr>
+                <tr>
+                    <th>Clinics Tracked</th>
+                    <td>{{ p.clinic_count|default('—') }}</td>
+                </tr>
+                <tr>
+                    <th>Total Reviews</th>
+                    <td>{{ p.total_reviews|default('—') }}</td>
+                </tr>
+                <tr>
+                    <th>Workflow Run ID</th>
+                    <td>
+                        {% if p.workflow_run_id %}
+                            <a href="https://github.com/PyGuy2000/pediatrica-dashboard/actions/runs/{{ p.workflow_run_id }}" target="_blank">{{ p.workflow_run_id }}</a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-state">Pipeline status unavailable — pipeline_status.json not yet deployed or app unreachable</p>
+    {% endif %}
+</div>
+
+{# Pod Health Card #}
+<div class="card">
+    <h3>Kubernetes Pods</h3>
+    {% if health.metrics.pods %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Pod</th>
+                    <th>Status</th>
+                    <th>Ready</th>
+                    <th>Image Tag</th>
+                    <th>Restarts</th>
+                    <th>Node</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pod in health.metrics.pods %}
+                <tr>
+                    <td>{{ pod.name }}</td>
+                    <td>
+                        {% if pod.phase == 'Running' %}
+                            <span class="badge badge-green">{{ pod.phase }}</span>
+                        {% elif pod.phase == 'Pending' %}
+                            <span class="badge badge-yellow">{{ pod.phase }}</span>
+                        {% else %}
+                            <span class="badge badge-red">{{ pod.phase }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pod.ready %}
+                            <span style="color: var(--green)">&#10003;</span>
+                        {% else %}
+                            <span style="color: var(--red)">&#10007;</span>
+                        {% endif %}
+                    </td>
+                    <td><code>{{ pod.image_tag }}</code></td>
+                    <td>{% if pod.restarts >= 5 %}<span style="color: var(--red)">{{ pod.restarts }}</span>{% else %}{{ pod.restarts }}{% endif %}</td>
+                    <td>{{ pod.node }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-state">No pods found in pediatrica namespace</p>
+    {% endif %}
+</div>
+{% endblock %}
