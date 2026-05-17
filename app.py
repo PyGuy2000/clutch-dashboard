@@ -25,6 +25,7 @@ def create_app():
     from routes.repos import bp as repos_bp
     from routes.github_activity import bp as github_bp
     from routes.pediatrica import bp as pediatrica_bp
+    from routes.github_repos import bp as github_repos_bp
 
     app.register_blueprint(overview_bp)
     app.register_blueprint(cron_bp)
@@ -44,6 +45,7 @@ def create_app():
     app.register_blueprint(repos_bp)
     app.register_blueprint(github_bp)
     app.register_blueprint(pediatrica_bp)
+    app.register_blueprint(github_repos_bp)
 
     @app.context_processor
     def inject_sync_age():

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Clutch — Saved Repos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Saved Repos</h1>
+    <p>{{ repo_total }} third-party repos saved for review</p>
+</div>
+
+<div class="stats-row" style="margin-bottom: 1.5rem;">
+    {% for s in status_counts %}
+    <span class="badge {% if s.status == 'watching' %}badge-blue{% elif s.status == 'reviewed' %}badge-green{% elif s.status == 'archived' %}badge-muted{% else %}badge-yellow{% endif %}" style="margin-right: 0.5rem;">
+        {{ s.status }}: {{ s.count }}
+    </span>
+    {% endfor %}
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Repo</th>
+                <th>Description</th>
+                <th>Why Saved</th>
+                <th>Tags</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Added</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in repos %}
+            <tr>
+                <td>
+                    <a href="{{ r.url }}" target="_blank">{{ r.owner }}/{{ r.name }}</a>
+                </td>
+                <td style="max-width: 250px; font-size: 0.85rem;">{{ r.description or '&mdash;' }}</td>
+                <td style="max-width: 200px; font-size: 0.85rem; color: var(--text-muted);">{{ r.reason or '&mdash;' }}</td>
+                <td style="font-size: 0.8rem;">
+                    {% if r.tags %}
+                        {% for tag in r.tags.split(',') %}
+                        <span class="badge badge-muted">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    {% else %}&mdash;{% endif %}
+                </td>
+                <td>
+                    <span class="badge {% if r.priority == 'high' %}badge-red{% elif r.priority == 'medium' %}badge-yellow{% else %}badge-muted{% endif %}">
+                        {{ r.priority }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge {% if r.status == 'watching' %}badge-blue{% elif r.status == 'reviewed' %}badge-green{% else %}badge-muted{% endif %}">
+                        {{ r.status }}
+                    </span>
+                </td>
+                <td style="white-space: nowrap;">{{ r.added_date or '&mdash;' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not repos %}
+            <tr><td colspan="7" class="empty-state"><p>No saved repos yet</p></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

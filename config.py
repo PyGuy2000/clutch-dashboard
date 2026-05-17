@@ -18,6 +18,7 @@ class Config:
         "chore_schedule": "chore_schedule.db",
         "meal_planning": "meal_planning.db",
         "crm": "crm.db",
+        "github_repos": "github_repos.db",
     }
 
     @classmethod
